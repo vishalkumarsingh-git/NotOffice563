@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -49,13 +50,21 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.RecentFileEntity
 import com.example.domain.model.DocumentType
 import com.example.ui.theme.ExcelSheetContainer
+import com.example.ui.theme.ExcelSheetContainerDark
+import com.example.ui.theme.ExcelSheetGreenLight
 import com.example.ui.theme.ExcelSheetGreen
 import com.example.ui.theme.PdfRubyContainer
+import com.example.ui.theme.PdfRubyContainerDark
+import com.example.ui.theme.PdfRubyRedLight
 import com.example.ui.theme.PdfRubyRed
 import com.example.ui.theme.PptPresentationAmber
+import com.example.ui.theme.PptPresentationAmberLight
 import com.example.ui.theme.PptPresentationContainer
+import com.example.ui.theme.PptPresentationContainerDark
 import com.example.ui.theme.WordDocBlue
+import com.example.ui.theme.WordDocBlueLight
 import com.example.ui.theme.WordDocContainer
+import com.example.ui.theme.WordDocContainerDark
 import com.example.util.FileUtils
 
 data class DocumentTypeAppearance(
@@ -68,6 +77,7 @@ data class DocumentTypeAppearance(
 @Composable
 fun getDocumentAppearance(typeString: String): DocumentTypeAppearance {
     val type = runCatching { DocumentType.valueOf(typeString) }.getOrDefault(DocumentType.UNKNOWN)
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     return when (type) {
         DocumentType.WORD_DOCX -> DocumentTypeAppearance(
             icon = Icons.Filled.Description,
