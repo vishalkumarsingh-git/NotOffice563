@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -71,13 +72,21 @@ import com.example.ui.components.EmptyState
 import com.example.ui.components.FileInfoBottomSheet
 import com.example.ui.components.StorageCard
 import com.example.ui.theme.ExcelSheetContainer
+import com.example.ui.theme.ExcelSheetContainerDark
+import com.example.ui.theme.ExcelSheetGreenLight
 import com.example.ui.theme.ExcelSheetGreen
 import com.example.ui.theme.PdfRubyContainer
+import com.example.ui.theme.PdfRubyContainerDark
+import com.example.ui.theme.PdfRubyRedLight
 import com.example.ui.theme.PdfRubyRed
 import com.example.ui.theme.PptPresentationAmber
+import com.example.ui.theme.PptPresentationAmberLight
 import com.example.ui.theme.PptPresentationContainer
+import com.example.ui.theme.PptPresentationContainerDark
 import com.example.ui.theme.WordDocBlue
+import com.example.ui.theme.WordDocBlueLight
 import com.example.ui.theme.WordDocContainer
+import com.example.ui.theme.WordDocContainerDark
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +99,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val isDarkSurface = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedFileForInfo by remember { mutableStateOf<RecentFileEntity?>(null) }
