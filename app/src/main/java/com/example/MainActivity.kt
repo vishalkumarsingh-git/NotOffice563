@@ -112,10 +112,10 @@ import com.example.ui.settings.SettingsViewModel
 import com.example.ui.theme.NotOfficeTheme
 import com.example.ui.viewer.ViewerScreen
 import com.example.ui.viewer.ViewerViewModel
-import com.example.util.SampleDocumentCreator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -148,24 +148,29 @@ class MainActivity : ComponentActivity() {
                 AppThemeMode.DARK -> true
             }
 
-            // Populate sample files on initial app launch only if workspace is empty
+            // Purge any previously created sample files to keep the workspace completely clean
             LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
                     try {
+                        val sampleFileNames = listOf(
+                            "Sample_Research_Notes.pdf",
+                            "Sample_Project_Proposal.docx",
+                            "Sample_Quarterly_Budget.xlsx",
+                            "Sample_Company_Overview.pptx"
+                        )
+                        for (name in sampleFileNames) {
+                            val f = File(context.filesDir, name)
+                            if (f.exists()) {
+                                f.delete()
+                            }
+                        }
                         val currentFiles = repository.allRecentFiles.first()
-                        if (currentFiles.isEmpty()) {
-                            val pdfUri = SampleDocumentCreator.createSamplePdf(context)
-                            val docxUri = SampleDocumentCreator.createSampleDocx(context)
-                            val xlsxUri = SampleDocumentCreator.createSampleXlsx(context)
-                            val pptxUri = SampleDocumentCreator.createSamplePptx(context)
-
-                            repository.registerOpenedDocument(context, pdfUri)
-                            repository.registerOpenedDocument(context, docxUri)
-                            repository.registerOpenedDocument(context, xlsxUri)
-                            repository.registerOpenedDocument(context, pptxUri)
+                        for (file in currentFiles) {
+                            if (file.displayName.startsWith("Sample_") || file.uri.contains("Sample_")) {
+                                repository.removeRecent(file.uri)
+                            }
                         }
                     } catch (_: Exception) {
-                        // Ignored on initial setup
                     }
                 }
             }
@@ -215,36 +220,21 @@ fun MainAppContent(
     )
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(
-                    modifier = Modifier.testTag("main_bottom_nav_bar")
-                ) {
-                    Screen.bottomNavItems.forEach { screen ->
-                        val selected = currentRoute == screen.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = {
-                                val icon = if (selected) screen.selectedIcon else screen.unselectedIcon
-                                if (icon != null) {
-                                    Icon(imageVector = icon, contentDescription = screen.title)
-                                }
-                            },
-                            label = { Text(screen.title) },
-                            modifier = Modifier.testTag("nav_item_${screen.route}")
-                        )
+                com.example.ui.navigation.NotOfficeDockBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { screen ->
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
+                )
             }
         }
     ) { innerPadding ->

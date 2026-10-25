@@ -19,6 +19,8 @@ sealed class Screen(
     val selectedIcon: ImageVector? = null,
     val unselectedIcon: ImageVector? = null
 ) {
+    val icon: ImageVector
+        get() = selectedIcon ?: Icons.Filled.Home
     object Home : Screen(
         route = "home",
         title = "Home",

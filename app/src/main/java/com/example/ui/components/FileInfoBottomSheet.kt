@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,21 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -47,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,7 +53,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.RecentFileEntity
 import com.example.domain.model.DocumentType
+import com.example.ui.theme.AccentBlue
+import com.example.ui.theme.ExpenseRed
 import com.example.ui.theme.PptPresentationAmber
+import com.example.ui.theme.SleekShapes
+import com.example.ui.theme.SleekSizes
 import com.example.util.FileUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,6 +84,7 @@ fun FileInfoBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = SleekShapes.sheet,
         containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
@@ -98,7 +102,7 @@ fun FileInfoBottomSheet(
                 Box(
                     modifier = Modifier
                         .size(52.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(SleekShapes.card)
                         .background(appearance.containerColor),
                     contentAlignment = Alignment.Center
                 ) {
@@ -106,7 +110,7 @@ fun FileInfoBottomSheet(
                         imageVector = appearance.icon,
                         contentDescription = null,
                         tint = appearance.iconColor,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(SleekSizes.iconLarge)
                     )
                 }
 
@@ -117,6 +121,7 @@ fun FileInfoBottomSheet(
                         text = file.displayName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -128,7 +133,10 @@ fun FileInfoBottomSheet(
                     )
                 }
 
-                IconButton(onClick = { onToggleFavorite(file) }) {
+                IconButton(
+                    onClick = { onToggleFavorite(file) },
+                    modifier = Modifier.size(SleekSizes.buttonSmall)
+                ) {
                     Icon(
                         imageVector = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
                         contentDescription = "Toggle favorite",
@@ -145,24 +153,30 @@ fun FileInfoBottomSheet(
                     onDismiss()
                     onOpen(file)
                 },
+                shape = SleekShapes.card,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentBlue,
+                    contentColor = Color.White
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(SleekSizes.buttonSmall)
                     .testTag("open_file_action_button")
             ) {
                 Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Open Document")
+                Text("Open Document", fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "File Metadata",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = AccentBlue
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -176,14 +190,15 @@ fun FileInfoBottomSheet(
             }
             MetadataRow("Location / URI", file.uri, isMonospace = true)
 
-            Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider()
+            Spacer(modifier = Modifier.height(18.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Actions",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -194,6 +209,7 @@ fun FileInfoBottomSheet(
             ) {
                 FilledTonalButton(
                     onClick = { onShare(file) },
+                    shape = SleekShapes.chip,
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -202,6 +218,7 @@ fun FileInfoBottomSheet(
                 }
                 FilledTonalButton(
                     onClick = { onOpenWith(file) },
+                    shape = SleekShapes.chip,
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(Icons.Filled.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -218,59 +235,79 @@ fun FileInfoBottomSheet(
             ) {
                 OutlinedButton(
                     onClick = { showRenameDialog = true },
+                    shape = SleekShapes.chip,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(Icons.Filled.DriveFileRenameOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Rename", fontSize = 12.sp)
                 }
+
                 OutlinedButton(
-                    onClick = { showDeleteConfirmDialog = true },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    onClick = {
+                        onDismiss()
+                        onRemoveRecent(file)
+                    },
+                    shape = SleekShapes.chip,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Delete", fontSize = 12.sp)
+                    Text("Remove Recent", fontSize = 12.sp)
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            TextButton(
-                onClick = {
-                    onRemoveRecent(file)
-                    onDismiss()
-                },
+            Button(
+                onClick = { showDeleteConfirmDialog = true },
+                shape = SleekShapes.chip,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ExpenseRed.copy(alpha = 0.12f),
+                    contentColor = ExpenseRed
+                ),
+                border = BorderStroke(1.dp, ExpenseRed.copy(alpha = 0.3f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Remove from Recent List", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Delete from Device Storage", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
 
-    // Rename Dialog
     if (showRenameDialog) {
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
-            title = { Text("Rename File") },
+            shape = SleekShapes.dialog,
+            title = { Text("Rename Document", fontWeight = FontWeight.Bold) },
             text = {
-                OutlinedTextField(
-                    value = renameInput,
-                    onValueChange = { renameInput = it },
-                    label = { Text("File Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    Text(
+                        text = "Enter a new display name for this file:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = renameInput,
+                        onValueChange = { renameInput = it },
+                        singleLine = true,
+                        shape = SleekShapes.input,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        showRenameDialog = false
                         if (renameInput.isNotBlank()) {
                             onRename(file, renameInput.trim())
+                            showRenameDialog = false
                         }
-                    }
+                    },
+                    shape = SleekShapes.card,
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
                 ) {
                     Text("Save")
                 }
@@ -283,24 +320,29 @@ fun FileInfoBottomSheet(
         )
     }
 
-    // Delete Confirmation Dialog
     if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("Delete Document?") },
+            shape = SleekShapes.dialog,
+            title = { Text("Delete File from Device?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("Are you sure you want to delete '${file.displayName}'? This will attempt to delete the file using Storage Access Framework and remove it from your workspace.")
+                Text(
+                    text = "Are you sure you want to delete '${file.displayName}' permanently from your device? This cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             },
             confirmButton = {
                 Button(
                     onClick = {
                         showDeleteConfirmDialog = false
-                        onDelete(file)
                         onDismiss()
+                        onDelete(file)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    shape = SleekShapes.card,
+                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
                 ) {
-                    Text("Delete")
+                    Text("Delete Permanently")
                 }
             },
             dismissButton = {
@@ -323,16 +365,16 @@ private fun MetadataRow(label: String, value: String, isMonospace: Boolean = fal
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(110.dp)
         )
         Text(
             text = value,
-            style = if (isMonospace) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 3,
+            maxLines = if (isMonospace) 2 else 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )

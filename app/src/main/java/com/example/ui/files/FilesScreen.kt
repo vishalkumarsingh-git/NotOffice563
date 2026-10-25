@@ -3,6 +3,7 @@ package com.example.ui.files
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,16 +34,19 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +71,11 @@ import com.example.ui.components.DocumentGridItem
 import com.example.ui.components.DocumentListItem
 import com.example.ui.components.EmptyState
 import com.example.ui.components.FileInfoBottomSheet
+import com.example.ui.theme.AccentBlue
+import com.example.ui.theme.AccentBlueContainer
+import com.example.ui.theme.OnAccentBlueContainer
+import com.example.ui.theme.SleekShapes
+import com.example.ui.theme.SleekSizes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,20 +107,32 @@ fun FilesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Workspace Files", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Workspace Files",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 actions = {
                     // View mode toggle
                     IconButton(
                         onClick = { viewModel.toggleViewMode() },
-                        modifier = Modifier.testTag("toggle_view_mode_button")
+                        modifier = Modifier
+                            .size(SleekSizes.buttonSmall)
+                            .testTag("toggle_view_mode_button")
                     ) {
                         Icon(
                             imageVector = if (uiState.viewMode == FileViewMode.LIST) Icons.Filled.GridView else Icons.AutoMirrored.Filled.ViewList,
-                            contentDescription = "Switch view mode"
+                            contentDescription = "Switch view mode",
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
 
@@ -118,11 +140,14 @@ fun FilesScreen(
                     Box {
                         IconButton(
                             onClick = { showSortMenu = true },
-                            modifier = Modifier.testTag("sort_button")
+                            modifier = Modifier
+                                .size(SleekSizes.buttonSmall)
+                                .testTag("sort_button")
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Sort,
-                                contentDescription = "Sort files"
+                                contentDescription = "Sort files",
+                                tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
 
@@ -130,13 +155,13 @@ fun FilesScreen(
                             expanded = showSortMenu,
                             onDismissRequest = { showSortMenu = false }
                         ) {
-                            FileSortOrder.values().forEach { sortOption ->
+                            FileSortOrder.entries.forEach { sortOption ->
                                 DropdownMenuItem(
                                     text = {
                                         Text(
                                             text = sortOption.title,
                                             fontWeight = if (uiState.sortOrder == sortOption) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (uiState.sortOrder == sortOption) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                            color = if (uiState.sortOrder == sortOption) AccentBlue else MaterialTheme.colorScheme.onSurface
                                         )
                                     },
                                     onClick = {
@@ -166,7 +191,12 @@ fun FilesScreen(
                         )
                     )
                 },
-                modifier = Modifier.testTag("files_add_fab")
+                shape = SleekShapes.card,
+                containerColor = AccentBlue,
+                contentColor = Color.White,
+                modifier = Modifier
+                    .padding(bottom = 76.dp)
+                    .testTag("files_add_fab")
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Open new file")
             }
@@ -182,8 +212,14 @@ fun FilesScreen(
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.onSearchQueryChanged(it) },
-                placeholder = { Text("Search files by name or extension...") },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                placeholder = { Text("Search files by name or format...", style = MaterialTheme.typography.bodyMedium) },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 trailingIcon = {
                     if (uiState.searchQuery.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
@@ -192,6 +228,13 @@ fun FilesScreen(
                     }
                 },
                 singleLine = true,
+                shape = SleekShapes.input,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AccentBlue,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
@@ -206,11 +249,28 @@ fun FilesScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                DocumentCategory.values().forEach { category ->
+                DocumentCategory.entries.forEach { category ->
+                    val isSelected = uiState.selectedCategory == category
                     FilterChip(
-                        selected = uiState.selectedCategory == category,
+                        selected = isSelected,
                         onClick = { viewModel.selectCategory(category) },
-                        label = { Text(category.displayName) },
+                        label = {
+                            Text(
+                                text = category.displayName,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            )
+                        },
+                        shape = SleekShapes.chip,
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) AccentBlue else MaterialTheme.colorScheme.outline
+                        ),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AccentBlueContainer,
+                            selectedLabelColor = OnAccentBlueContainer,
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
                         modifier = Modifier.testTag("category_chip_${category.name.lowercase()}")
                     )
                 }
@@ -249,7 +309,7 @@ fun FilesScreen(
             } else if (uiState.viewMode == FileViewMode.LIST) {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.files, key = { it.uri }) { file ->
@@ -281,7 +341,7 @@ fun FilesScreen(
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 150.dp),
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -297,6 +357,7 @@ fun FilesScreen(
         }
     }
 
+    // File details bottom sheet
     if (selectedFileForInfo != null) {
         FileInfoBottomSheet(
             file = selectedFileForInfo,

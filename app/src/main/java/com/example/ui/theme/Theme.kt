@@ -11,55 +11,79 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+// Financer Pro dark color scheme: deep slate with subtle blue undertones
 private val DarkColorScheme = darkColorScheme(
     primary = AccentBlueLight,
     onPrimary = SlateNavyDark,
     primaryContainer = AccentBlueContainerDark,
-    onPrimaryContainer = Color(0xFFDBEAFE),
-    secondary = Color(0xFF94A3B8),
+    onPrimaryContainer = AccentBlueContainer,
+    inversePrimary = AccentBlue,
+    secondary = TextSecondaryDark,
     onSecondary = SlateNavyDark,
-    secondaryContainer = Color(0xFF1E293B),
-    onSecondaryContainer = Color(0xFFF1F5F9),
+    secondaryContainer = SurfaceVariantDark,
+    onSecondaryContainer = TextPrimaryDark,
     tertiary = ExcelSheetGreenLight,
     onTertiary = Color(0xFF022C22),
+    tertiaryContainer = ExcelSheetContainerDark,
+    onTertiaryContainer = Color(0xFFDCFCE7),
+    error = ExpenseRed,
+    onError = Color(0xFF450A0A),
+    errorContainer = ExpenseRedContainerDark,
+    onErrorContainer = Color(0xFFFEE2E2),
     background = BackgroundDark,
     onBackground = TextPrimaryDark,
     surface = SurfaceDark,
     onSurface = TextPrimaryDark,
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = TextSecondaryDark,
-    outline = OutlineDark
+    surfaceTint = AccentBlueLight,
+    inverseSurface = Color(0xFFE6E8EF),
+    inverseOnSurface = Color(0xFF171923),
+    outline = OutlineDark,
+    outlineVariant = OutlineVariantDark
 )
 
+// Financer Pro light color scheme: cool near-white with Classic Blue accents
 private val LightColorScheme = lightColorScheme(
     primary = AccentBlue,
     onPrimary = Color.White,
     primaryContainer = AccentBlueContainer,
-    onPrimaryContainer = Color(0xFF1E3A8A),
+    onPrimaryContainer = OnAccentBlueContainer,
+    inversePrimary = AccentBlueLight,
     secondary = SlateBlue,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFF1F5F9),
-    onSecondaryContainer = SlateNavyDark,
+    secondaryContainer = SurfaceVariantLight,
+    onSecondaryContainer = TextPrimaryLight,
     tertiary = ExcelSheetGreen,
     onTertiary = Color.White,
+    tertiaryContainer = ExcelSheetContainer,
+    onTertiaryContainer = Color(0xFF064E3B),
+    error = ExpenseRed,
+    onError = Color.White,
+    errorContainer = ExpenseRedContainer,
+    onErrorContainer = Color(0xFF7F1D1D),
     background = BackgroundLight,
     onBackground = TextPrimaryLight,
     surface = SurfaceLight,
     onSurface = TextPrimaryLight,
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = TextSecondaryLight,
-    outline = OutlineLight
+    surfaceTint = AccentBlue,
+    inverseSurface = Color(0xFF252A35),
+    inverseOnSurface = Color(0xFFF7F8FC),
+    outline = OutlineLight,
+    outlineVariant = OutlineVariantLight
 )
 
 @Composable
 fun NotOfficeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Keep consistent branding colors
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         darkTheme -> DarkColorScheme

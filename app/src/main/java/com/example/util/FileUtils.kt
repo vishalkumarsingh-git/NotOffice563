@@ -38,6 +38,10 @@ object FileUtils {
         }
     }
 
+    fun formatRelativeTime(timestamp: Long): String {
+        return formatDateShort(timestamp)
+    }
+
     fun getDisplayName(context: Context, uri: Uri): String {
         var name: String? = null
         if (uri.scheme == ContentResolver.SCHEME_CONTENT) {

@@ -80,26 +80,46 @@ fun ViewerScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = fileMetadata?.displayName ?: "Document Viewer",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column {
+                        Text(
+                            text = fileMetadata?.displayName ?: "Document Viewer",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        val meta = fileMetadata
+                        if (meta != null) {
+                            Text(
+                                text = "${meta.extension.uppercase()} Workspace",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.size(com.example.ui.theme.SleekSizes.buttonSmall)
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 actions = {
                     // Favorite Toggle
                     IconButton(
                         onClick = { viewModel.toggleFavorite() },
-                        modifier = Modifier.testTag("viewer_favorite_button")
+                        modifier = Modifier
+                            .size(com.example.ui.theme.SleekSizes.buttonSmall)
+                            .testTag("viewer_favorite_button")
                     ) {
                         val isFav = fileMetadata?.isFavorite == true
                         Icon(
@@ -121,14 +141,18 @@ fun ViewerScreen(
                                     title = meta.displayName
                                 )
                             }
-                        }
+                        },
+                        modifier = Modifier.size(com.example.ui.theme.SleekSizes.buttonSmall)
                     ) {
                         Icon(Icons.Filled.Share, contentDescription = "Share")
                     }
 
                     // Overflow Menu
                     Box {
-                        IconButton(onClick = { showOverflowMenu = true }) {
+                        IconButton(
+                            onClick = { showOverflowMenu = true },
+                            modifier = Modifier.size(com.example.ui.theme.SleekSizes.buttonSmall)
+                        ) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "More")
                         }
 
@@ -137,7 +161,7 @@ fun ViewerScreen(
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("File Details") },
+                                text = { Text("File Details & Notes") },
                                 onClick = {
                                     showOverflowMenu = false
                                     showFileInfoSheet = true
