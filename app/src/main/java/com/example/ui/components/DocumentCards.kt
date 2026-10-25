@@ -81,44 +81,44 @@ fun getDocumentAppearance(typeString: String): DocumentTypeAppearance {
     return when (type) {
         DocumentType.WORD_DOCX -> DocumentTypeAppearance(
             icon = Icons.Filled.Description,
-            iconColor = WordDocBlue,
-            containerColor = WordDocContainer,
+            iconColor = if (isDark) WordDocBlueLight else WordDocBlue,
+            containerColor = if (isDark) WordDocContainerDark else WordDocContainer,
             badgeLabel = "DOCX"
         )
         DocumentType.WORD_DOC -> DocumentTypeAppearance(
             icon = Icons.Filled.Description,
-            iconColor = WordDocBlue,
-            containerColor = WordDocContainer,
+            iconColor = if (isDark) WordDocBlueLight else WordDocBlue,
+            containerColor = if (isDark) WordDocContainerDark else WordDocContainer,
             badgeLabel = "DOC"
         )
         DocumentType.EXCEL_XLSX -> DocumentTypeAppearance(
             icon = Icons.Filled.TableChart,
-            iconColor = ExcelSheetGreen,
-            containerColor = ExcelSheetContainer,
+            iconColor = if (isDark) ExcelSheetGreenLight else ExcelSheetGreen,
+            containerColor = if (isDark) ExcelSheetContainerDark else ExcelSheetContainer,
             badgeLabel = "XLSX"
         )
         DocumentType.EXCEL_XLS -> DocumentTypeAppearance(
             icon = Icons.Filled.TableChart,
-            iconColor = ExcelSheetGreen,
-            containerColor = ExcelSheetContainer,
+            iconColor = if (isDark) ExcelSheetGreenLight else ExcelSheetGreen,
+            containerColor = if (isDark) ExcelSheetContainerDark else ExcelSheetContainer,
             badgeLabel = "XLS"
         )
         DocumentType.PPT_PPTX -> DocumentTypeAppearance(
             icon = Icons.Filled.Slideshow,
-            iconColor = PptPresentationAmber,
-            containerColor = PptPresentationContainer,
+            iconColor = if (isDark) PptPresentationAmberLight else PptPresentationAmber,
+            containerColor = if (isDark) PptPresentationContainerDark else PptPresentationContainer,
             badgeLabel = "PPTX"
         )
         DocumentType.PPT_PPT -> DocumentTypeAppearance(
             icon = Icons.Filled.Slideshow,
-            iconColor = PptPresentationAmber,
-            containerColor = PptPresentationContainer,
+            iconColor = if (isDark) PptPresentationAmberLight else PptPresentationAmber,
+            containerColor = if (isDark) PptPresentationContainerDark else PptPresentationContainer,
             badgeLabel = "PPT"
         )
         DocumentType.PDF -> DocumentTypeAppearance(
             icon = Icons.Filled.PictureAsPdf,
-            iconColor = PdfRubyRed,
-            containerColor = PdfRubyContainer,
+            iconColor = if (isDark) PdfRubyRedLight else PdfRubyRed,
+            containerColor = if (isDark) PdfRubyContainerDark else PdfRubyContainer,
             badgeLabel = "PDF"
         )
         DocumentType.UNKNOWN -> DocumentTypeAppearance(
