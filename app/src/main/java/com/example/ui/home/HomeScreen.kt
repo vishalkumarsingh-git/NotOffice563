@@ -221,8 +221,8 @@ fun HomeScreen(
                             title = "Documents",
                             count = uiState.documentCount,
                             icon = Icons.Filled.Description,
-                            color = WordDocBlue,
-                            containerColor = WordDocContainer,
+                            color = if (isDarkSurface) WordDocBlueLight else WordDocBlue,
+                            containerColor = if (isDarkSurface) WordDocContainerDark else WordDocContainer,
                             onClick = { onNavigateToCategory(DocumentCategory.DOCUMENTS) },
                             modifier = Modifier.weight(1f)
                         )
@@ -230,8 +230,8 @@ fun HomeScreen(
                             title = "Spreadsheets",
                             count = uiState.spreadsheetCount,
                             icon = Icons.Filled.TableChart,
-                            color = ExcelSheetGreen,
-                            containerColor = ExcelSheetContainer,
+                            color = if (isDarkSurface) ExcelSheetGreenLight else ExcelSheetGreen,
+                            containerColor = if (isDarkSurface) ExcelSheetContainerDark else ExcelSheetContainer,
                             onClick = { onNavigateToCategory(DocumentCategory.SPREADSHEETS) },
                             modifier = Modifier.weight(1f)
                         )
@@ -247,8 +247,8 @@ fun HomeScreen(
                             title = "Presentations",
                             count = uiState.presentationCount,
                             icon = Icons.Filled.Slideshow,
-                            color = PptPresentationAmber,
-                            containerColor = PptPresentationContainer,
+                            color = if (isDarkSurface) PptPresentationAmberLight else PptPresentationAmber,
+                            containerColor = if (isDarkSurface) PptPresentationContainerDark else PptPresentationContainer,
                             onClick = { onNavigateToCategory(DocumentCategory.PRESENTATIONS) },
                             modifier = Modifier.weight(1f)
                         )
@@ -256,8 +256,8 @@ fun HomeScreen(
                             title = "PDFs",
                             count = uiState.pdfCount,
                             icon = Icons.Filled.PictureAsPdf,
-                            color = PdfRubyRed,
-                            containerColor = PdfRubyContainer,
+                            color = if (isDarkSurface) PdfRubyRedLight else PdfRubyRed,
+                            containerColor = if (isDarkSurface) PdfRubyContainerDark else PdfRubyContainer,
                             onClick = { onNavigateToCategory(DocumentCategory.PDFS) },
                             modifier = Modifier.weight(1f)
                         )
