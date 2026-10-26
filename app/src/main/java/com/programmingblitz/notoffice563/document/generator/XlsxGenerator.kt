@@ -2,9 +2,6 @@ package com.programmingblitz.notoffice563.document.generator
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -20,14 +17,14 @@ object XlsxGenerator {
         ),
         DocumentStarterTemplate(
             id = "xlsx_budget",
-            title = "Monthly Budget",
+            title = "Monthly Budget Template",
             description = "Expense categories, planned allocations, and actual spending",
             format = DocumentFormatCategory.XLSX,
             defaultFileName = "Monthly Budget"
         ),
         DocumentStarterTemplate(
             id = "xlsx_tracker",
-            title = "Project Tracker",
+            title = "Project Tracker Template",
             description = "Task list with assignees, status, priorities, and deadlines",
             format = DocumentFormatCategory.XLSX,
             defaultFileName = "Project Tracker"
@@ -37,30 +34,12 @@ object XlsxGenerator {
     fun generate(templateId: String, sheetName: String = "Sheet1"): ByteArray {
         val rows: List<List<String>> = when (templateId) {
             "xlsx_budget" -> listOf(
-                listOf("Category", "Budgeted ($)", "Actual ($)", "Difference ($)", "Status"),
-                listOf("Housing & Rent", "1500", "1500", "0", "On Track"),
-                listOf("Groceries & Food", "600", "550", "50", "Under Budget"),
-                listOf("Utilities & Internet", "250", "270", "-20", "Over Budget"),
-                listOf("Transportation & Fuel", "200", "180", "20", "Under Budget"),
-                listOf("Healthcare & Insurance", "180", "180", "0", "On Track"),
-                listOf("Entertainment & Dining", "250", "220", "30", "Under Budget"),
-                listOf("Emergency Fund Savings", "500", "500", "0", "Funded"),
-                listOf("Total Expenses", "3480", "3400", "80", "Net Positive")
+                listOf("Category", "Budgeted ($)", "Actual ($)", "Difference ($)", "Status")
             )
             "xlsx_tracker" -> listOf(
-                listOf("Task ID", "Task Title", "Assignee", "Priority", "Status", "Due Date"),
-                listOf("TSK-101", "Design System Polish", "Alex M.", "High", "In Progress", "Nov 15"),
-                listOf("TSK-102", "OOXML Generator Tests", "David K.", "Urgent", "Completed", "Nov 12"),
-                listOf("TSK-103", "SAF Permissions Audit", "Sarah L.", "Medium", "In Review", "Nov 18"),
-                listOf("TSK-104", "Offline Document Viewer", "Alex M.", "High", "In Progress", "Nov 20"),
-                listOf("TSK-105", "Release Candidate Build", "Team", "Urgent", "Pending", "Nov 25")
+                listOf("Task ID", "Task Title", "Assignee", "Priority", "Status", "Due Date")
             )
-            else -> listOf(
-                listOf("Item", "Description", "Value", "Notes"),
-                listOf("Row 1", "Sample Entry A", "100", "Ready"),
-                listOf("Row 2", "Sample Entry B", "250", "Review"),
-                listOf("Row 3", "Sample Entry C", "400", "Approved")
-            )
+            else -> emptyList() // Blank spreadsheet has NO prewritten rows or sample data!
         }
 
         return buildXlsxZip(sheetName, rows)

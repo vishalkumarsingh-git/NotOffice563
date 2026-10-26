@@ -82,55 +82,32 @@ fun ViewerScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = fileMetadata?.displayName ?: "Document Viewer",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        val meta = fileMetadata
-                        if (meta != null) {
-                            Text(
-                                text = "${meta.extension.uppercase()} Workspace",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTopBar(
+                title = fileMetadata?.displayName ?: "Document Workspace",
+                subtitle = fileMetadata?.let { "${it.extension.uppercase()} Document Workspace" },
                 navigationIcon = {
-                    IconButton(
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton(
                         onClick = onNavigateBack,
-                        modifier = Modifier.size(com.programmingblitz.notoffice563.ui.theme.SleekSizes.buttonSmall)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        size = 36.dp
+                    )
                 },
-                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
                 actions = {
-                    // Favorite Toggle
-                    IconButton(
+                    val isFav = fileMetadata?.isFavorite == true
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton(
                         onClick = { viewModel.toggleFavorite() },
-                        modifier = Modifier
-                            .size(com.programmingblitz.notoffice563.ui.theme.SleekSizes.buttonSmall)
-                            .testTag("viewer_favorite_button")
-                    ) {
-                        val isFav = fileMetadata?.isFavorite == true
-                        Icon(
-                            imageVector = if (isFav) Icons.Filled.Star else Icons.Filled.StarBorder,
-                            contentDescription = "Favorite",
-                            tint = if (isFav) PptPresentationAmber else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                        icon = if (isFav) Icons.Filled.Star else Icons.Filled.StarBorder,
+                        contentDescription = "Favorite",
+                        isActive = isFav,
+                        activeColor = PptPresentationAmber,
+                        size = 36.dp,
+                        modifier = Modifier.testTag("viewer_favorite_button")
+                    )
 
-                    // Share Button
-                    IconButton(
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton(
                         onClick = {
                             val meta = fileMetadata
                             if (meta != null) {
@@ -142,19 +119,20 @@ fun ViewerScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.size(com.programmingblitz.notoffice563.ui.theme.SleekSizes.buttonSmall)
-                    ) {
-                        Icon(Icons.Filled.Share, contentDescription = "Share")
-                    }
+                        icon = Icons.Filled.Share,
+                        contentDescription = "Share",
+                        size = 36.dp
+                    )
 
-                    // Overflow Menu
+                    Spacer(modifier = Modifier.width(6.dp))
+
                     Box {
-                        IconButton(
+                        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton(
                             onClick = { showOverflowMenu = true },
-                            modifier = Modifier.size(com.programmingblitz.notoffice563.ui.theme.SleekSizes.buttonSmall)
-                        ) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = "More")
-                        }
+                            icon = Icons.Filled.MoreVert,
+                            contentDescription = "More options",
+                            size = 36.dp
+                        )
 
                         DropdownMenu(
                             expanded = showOverflowMenu,

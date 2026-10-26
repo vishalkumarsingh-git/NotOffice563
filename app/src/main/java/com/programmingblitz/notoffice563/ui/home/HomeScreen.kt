@@ -3,10 +3,7 @@ package com.programmingblitz.notoffice563.ui.home
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,27 +22,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.TableChart
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -60,40 +47,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.programmingblitz.notoffice563.data.local.RecentFileEntity
 import com.programmingblitz.notoffice563.document.saf.SafHelper
 import com.programmingblitz.notoffice563.domain.model.DocumentCategory
+import com.programmingblitz.notoffice563.domain.model.DocumentType
 import com.programmingblitz.notoffice563.ui.components.DocumentGridItem
 import com.programmingblitz.notoffice563.ui.components.DocumentListItem
 import com.programmingblitz.notoffice563.ui.components.EmptyState
 import com.programmingblitz.notoffice563.ui.components.FileInfoBottomSheet
+import com.programmingblitz.notoffice563.ui.components.OfficeDocumentIcon
 import com.programmingblitz.notoffice563.ui.components.StorageCard
 import com.programmingblitz.notoffice563.ui.theme.AccentBlue
-import com.programmingblitz.notoffice563.ui.theme.ExcelSheetContainer
-import com.programmingblitz.notoffice563.ui.theme.ExcelSheetContainerDark
 import com.programmingblitz.notoffice563.ui.theme.ExcelSheetGreen
-import com.programmingblitz.notoffice563.ui.theme.ExcelSheetGreenLight
-import com.programmingblitz.notoffice563.ui.theme.PdfRubyContainer
-import com.programmingblitz.notoffice563.ui.theme.PdfRubyContainerDark
 import com.programmingblitz.notoffice563.ui.theme.PdfRubyRed
-import com.programmingblitz.notoffice563.ui.theme.PdfRubyRedLight
 import com.programmingblitz.notoffice563.ui.theme.PptPresentationAmber
-import com.programmingblitz.notoffice563.ui.theme.PptPresentationAmberLight
-import com.programmingblitz.notoffice563.ui.theme.PptPresentationContainer
-import com.programmingblitz.notoffice563.ui.theme.PptPresentationContainerDark
-import com.programmingblitz.notoffice563.ui.theme.SleekShapes
-import com.programmingblitz.notoffice563.ui.theme.SleekSizes
 import com.programmingblitz.notoffice563.ui.theme.WordDocBlue
-import com.programmingblitz.notoffice563.ui.theme.WordDocBlueLight
-import com.programmingblitz.notoffice563.ui.theme.WordDocContainer
-import com.programmingblitz.notoffice563.ui.theme.WordDocContainerDark
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassCard
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,15 +124,20 @@ fun HomeScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 96.dp)
         ) {
-            // Header: NotOffice563 Branding & Search Bar
+            // 1. Refined Top Bar: Identity, Search, Account
             item {
-                Column(
+                LiquidGlassSurface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 14.dp)
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    shape = LiquidGlassTokens.ShapeMedium,
+                    isDark = isDark,
+                    elevation = 4.dp
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -159,211 +146,138 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f, fill = false)
                         ) {
                             if (onOpenDrawer != null) {
-                                IconButton(
+                                LiquidGlassIconButton(
                                     onClick = onOpenDrawer,
-                                    modifier = Modifier
-                                        .testTag("open_drawer_button")
-                                        .size(SleekSizes.buttonSmall)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surface)
-                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Menu,
-                                        contentDescription = "Open navigation drawer",
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
+                                    icon = Icons.Filled.Menu,
+                                    contentDescription = "Open Drawer",
+                                    size = 36.dp,
+                                    modifier = Modifier.testTag("open_drawer_button")
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
                             }
 
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Surface(
-                                        shape = SleekShapes.chip,
-                                        color = AccentBlue.copy(alpha = if (isDark) 0.22f else 0.12f),
-                                        border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.3f))
-                                    ) {
-                                        Text(
-                                            text = "WORKSPACE",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = AccentBlue,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "NotOffice563",
-                                    style = MaterialTheme.typography.headlineLarge,
+                            Text(
+                                text = "NotOffice563",
+                                style = TextStyle(
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onBackground
+                                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
                                 )
-                                Text(
-                                    text = "Independent Office & PDF Workspace",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            )
                         }
 
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(
+                            LiquidGlassIconButton(
                                 onClick = onNavigateToSearch,
-                                modifier = Modifier
-                                    .testTag("home_search_button")
-                                    .size(SleekSizes.buttonSmall)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surface)
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Search,
-                                    contentDescription = "Universal Search",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
+                                icon = Icons.Filled.Search,
+                                contentDescription = "Search",
+                                size = 36.dp,
+                                modifier = Modifier.testTag("home_search_button")
+                            )
 
                             if (onNavigateToProfile != null) {
-                                IconButton(
+                                LiquidGlassIconButton(
                                     onClick = onNavigateToProfile,
-                                    modifier = Modifier
-                                        .testTag("home_profile_button")
-                                        .size(SleekSizes.buttonSmall)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surface)
-                                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Person,
-                                        contentDescription = "Profile & Account",
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Storage Overview Hero Card
-                    StorageCard(storageInfo = uiState.storageInfo)
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Action Buttons: New Document & Browse
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Button(
-                            onClick = { showCreateSheet = true },
-                            shape = SleekShapes.card,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = AccentBlue,
-                                contentColor = Color.White
-                            ),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(SleekSizes.buttonLarge)
-                                .testTag("create_document_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(SleekSizes.iconMedium)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "New File",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                documentPickerLauncher.launch(
-                                    arrayOf(
-                                        "application/pdf",
-                                        "application/msword",
-                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                        "application/vnd.ms-excel",
-                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                        "application/vnd.ms-powerpoint",
-                                        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                                        "*/*"
-                                    )
+                                    icon = Icons.Filled.Person,
+                                    contentDescription = "Profile",
+                                    size = 36.dp,
+                                    modifier = Modifier.testTag("home_profile_button")
                                 )
-                            },
-                            shape = SleekShapes.card,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isDark) Color(0x33FFFFFF) else Color(0xFFF1F5F9),
-                                contentColor = if (isDark) Color.White else Color(0xFF0F172A)
-                            ),
-                            border = BorderStroke(
-                                1.dp,
-                                if (isDark) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.outline
-                            ),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(SleekSizes.buttonLarge)
-                                .testTag("open_file_fab")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.FileOpen,
-                                contentDescription = null,
-                                modifier = Modifier.size(SleekSizes.iconMedium)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Browse",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            }
                         }
                     }
                 }
             }
 
-            // Quick Access Categories
+            // 2. Storage Capacity Overview Card
+            item {
+                Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
+                    StorageCard(storageInfo = uiState.storageInfo)
+                }
+            }
+
+            // 3. Prominent New File & Browse Actions
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    LiquidGlassButton(
+                        text = "New File",
+                        onClick = { showCreateSheet = true },
+                        icon = Icons.Filled.Add,
+                        isPrimary = true,
+                        accentColor = AccentBlue,
+                        height = 46.dp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("create_document_button")
+                    )
+
+                    LiquidGlassButton(
+                        text = "Browse",
+                        onClick = {
+                            documentPickerLauncher.launch(
+                                arrayOf(
+                                    "application/pdf",
+                                    "application/msword",
+                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                    "application/vnd.ms-excel",
+                                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                    "application/vnd.ms-powerpoint",
+                                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                    "*/*"
+                                )
+                            )
+                        },
+                        icon = Icons.Filled.FolderOpen,
+                        isPrimary = false,
+                        height = 46.dp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("open_file_fab")
+                    )
+                }
+            }
+
+            // 4. Document Categories Section
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 6.dp)
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "Categories",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        text = "Document Categories",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                        )
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        CategoryCard(
-                            title = "Documents",
+                        CategoryTile(
+                            title = "Word Documents",
                             count = uiState.documentCount,
-                            icon = Icons.Filled.Description,
-                            color = if (isDark) WordDocBlueLight else WordDocBlue,
-                            containerColor = if (isDark) WordDocContainerDark else WordDocContainer,
+                            documentType = DocumentType.WORD_DOCX,
                             onClick = { onNavigateToCategory(DocumentCategory.DOCUMENTS) },
                             modifier = Modifier.weight(1f)
                         )
-                        CategoryCard(
+                        CategoryTile(
                             title = "Spreadsheets",
                             count = uiState.spreadsheetCount,
-                            icon = Icons.Filled.TableChart,
-                            color = if (isDark) ExcelSheetGreenLight else ExcelSheetGreen,
-                            containerColor = if (isDark) ExcelSheetContainerDark else ExcelSheetContainer,
+                            documentType = DocumentType.EXCEL_XLSX,
                             onClick = { onNavigateToCategory(DocumentCategory.SPREADSHEETS) },
                             modifier = Modifier.weight(1f)
                         )
@@ -375,21 +289,17 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        CategoryCard(
+                        CategoryTile(
                             title = "Presentations",
                             count = uiState.presentationCount,
-                            icon = Icons.Filled.Slideshow,
-                            color = if (isDark) PptPresentationAmberLight else PptPresentationAmber,
-                            containerColor = if (isDark) PptPresentationContainerDark else PptPresentationContainer,
+                            documentType = DocumentType.PPT_PPTX,
                             onClick = { onNavigateToCategory(DocumentCategory.PRESENTATIONS) },
                             modifier = Modifier.weight(1f)
                         )
-                        CategoryCard(
-                            title = "PDFs",
+                        CategoryTile(
+                            title = "PDF Documents",
                             count = uiState.pdfCount,
-                            icon = Icons.Filled.PictureAsPdf,
-                            color = if (isDark) PdfRubyRedLight else PdfRubyRed,
-                            containerColor = if (isDark) PdfRubyContainerDark else PdfRubyContainer,
+                            documentType = DocumentType.PDF,
                             onClick = { onNavigateToCategory(DocumentCategory.PDFS) },
                             modifier = Modifier.weight(1f)
                         )
@@ -397,36 +307,38 @@ fun HomeScreen(
                 }
             }
 
-            // Favorites Section (if present)
+            // 5. Favorites Section
             if (uiState.favoriteFiles.isNotEmpty()) {
                 item {
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Star,
                                 contentDescription = null,
                                 tint = PptPresentationAmber,
-                                modifier = Modifier.size(SleekSizes.iconMedium)
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Favorites",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                                )
                             )
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
 
                         LazyRow(
-                            contentPadding = PaddingValues(horizontal = 20.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(uiState.favoriteFiles, key = { "fav_${it.uri}" }) { file ->
@@ -442,28 +354,33 @@ fun HomeScreen(
                 }
             }
 
-            // Recently Opened Files
+            // 6. Recent Documents Section
             item {
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Recent Documents",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                        )
                     )
                     if (uiState.recentFiles.isNotEmpty()) {
                         TextButton(onClick = onNavigateToRecent) {
                             Text(
                                 text = "See all",
-                                color = AccentBlue,
-                                fontWeight = FontWeight.SemiBold
+                                style = TextStyle(
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AccentBlue
+                                )
                             )
                         }
                     }
@@ -474,28 +391,15 @@ fun HomeScreen(
                 item {
                     EmptyState(
                         title = "No documents in workspace",
-                        subtitle = "Select any Word, Excel, PowerPoint, or PDF file on your device to start reading.",
-                        actionButtonText = "+ Open File",
-                        onActionClick = {
-                            documentPickerLauncher.launch(
-                                arrayOf(
-                                    "application/pdf",
-                                    "application/msword",
-                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    "application/vnd.ms-excel",
-                                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                    "application/vnd.ms-powerpoint",
-                                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                                    "*/*"
-                                )
-                            )
-                        },
+                        subtitle = "Open or create Word, Excel, PowerPoint, or PDF files to start your productivity workspace.",
+                        actionButtonText = "+ New File",
+                        onActionClick = { showCreateSheet = true },
                         modifier = Modifier.padding(vertical = 12.dp)
                     )
                 }
             } else {
                 items(uiState.recentFiles, key = { "recent_${it.uri}" }) { file ->
-                    Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) {
+                    Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                         DocumentListItem(
                             file = file,
                             onClick = { onNavigateToViewer(file.uri) },
@@ -524,7 +428,6 @@ fun HomeScreen(
         }
     }
 
-    // File details bottom sheet
     if (selectedFileForInfo != null) {
         FileInfoBottomSheet(
             file = selectedFileForInfo,
@@ -568,57 +471,47 @@ fun HomeScreen(
 }
 
 @Composable
-fun CategoryCard(
+fun CategoryTile(
     title: String,
     count: Int,
-    icon: ImageVector,
-    color: Color,
-    containerColor: Color,
+    documentType: DocumentType,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .testTag("category_card_${title.lowercase()}")
-            .clickable(onClick = onClick),
-        shape = SleekShapes.card,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    LiquidGlassCard(
+        modifier = modifier.testTag("category_card_${title.lowercase()}"),
+        onClick = onClick,
+        isDark = isDark
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(SleekShapes.chip)
-                    .background(containerColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(SleekSizes.iconLarge)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
+            OfficeDocumentIcon(
+                documentType = documentType,
+                size = 38.dp
+            )
+            Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "$count file${if (count == 1) "" else "s"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                    )
                 )
             }
         }

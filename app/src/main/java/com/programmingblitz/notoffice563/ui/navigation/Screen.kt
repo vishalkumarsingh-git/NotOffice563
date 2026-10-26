@@ -1,5 +1,6 @@
 package com.programmingblitz.notoffice563.ui.navigation
 
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Folder
@@ -12,8 +13,7 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import com.programmingblitz.notoffice563.domain.model.DocumentCategory
 
 sealed class Screen(
     val route: String,
@@ -23,6 +23,7 @@ sealed class Screen(
 ) {
     val icon: ImageVector
         get() = selectedIcon ?: Icons.Filled.Home
+
     object Home : Screen(
         route = "home",
         title = "Home",
@@ -31,11 +32,19 @@ sealed class Screen(
     )
 
     object Files : Screen(
-        route = "files",
+        route = "files?category={category}",
         title = "Files",
         selectedIcon = Icons.Filled.Folder,
         unselectedIcon = Icons.Outlined.Folder
-    )
+    ) {
+        fun createRoute(category: DocumentCategory? = null): String {
+            return if (category != null && category != DocumentCategory.ALL) {
+                "files?category=${category.name}"
+            } else {
+                "files"
+            }
+        }
+    }
 
     object Recent : Screen(
         route = "recent",
@@ -68,7 +77,7 @@ sealed class Screen(
         title = "Viewer"
     ) {
         fun createRoute(uri: String): String {
-            val encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8.toString())
+            val encoded = Uri.encode(uri)
             return "viewer/$encoded"
         }
     }

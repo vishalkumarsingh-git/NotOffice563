@@ -172,21 +172,12 @@ fun DocumentListItem(
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Document Format Icon Box
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(SleekShapes.chip)
-                    .background(appearance.containerColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = appearance.icon,
-                    contentDescription = null,
-                    tint = appearance.iconColor,
-                    modifier = Modifier.size(SleekSizes.iconLarge)
-                )
-            }
+            // Microsoft 365-inspired Document Icon
+            val docType = runCatching { DocumentType.valueOf(file.fileType) }.getOrDefault(DocumentType.UNKNOWN)
+            OfficeDocumentIcon(
+                documentType = docType,
+                size = 44.dp
+            )
 
             Spacer(modifier = Modifier.width(14.dp))
 
@@ -365,21 +356,12 @@ fun DocumentGridItem(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Centered icon container
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(appearance.containerColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = appearance.icon,
-                    contentDescription = null,
-                    tint = appearance.iconColor,
-                    modifier = Modifier.size(SleekSizes.iconHero)
-                )
-            }
+            // Centered Microsoft 365-inspired icon
+            val docTypeGrid = runCatching { DocumentType.valueOf(file.fileType) }.getOrDefault(DocumentType.UNKNOWN)
+            OfficeDocumentIcon(
+                documentType = docTypeGrid,
+                size = 54.dp
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 

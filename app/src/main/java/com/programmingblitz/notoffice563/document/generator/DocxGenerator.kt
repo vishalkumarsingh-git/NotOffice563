@@ -14,21 +14,21 @@ object DocxGenerator {
         DocumentStarterTemplate(
             id = "docx_blank",
             title = "Blank Document",
-            description = "Start with a clean page and customized title",
+            description = "Start with a clean, empty page",
             format = DocumentFormatCategory.DOCX,
             defaultFileName = "New Document"
         ),
         DocumentStarterTemplate(
             id = "docx_meeting",
-            title = "Meeting Notes",
-            description = "Structured agenda, attendees list, and action items",
+            title = "Meeting Notes Template",
+            description = "Structure agenda, attendees, and action items",
             format = DocumentFormatCategory.DOCX,
             defaultFileName = "Meeting Notes"
         ),
         DocumentStarterTemplate(
             id = "docx_proposal",
-            title = "Project Proposal",
-            description = "Professional outline with objectives, scope, and timeline",
+            title = "Project Proposal Template",
+            description = "Outline objectives, scope, and timeline",
             format = DocumentFormatCategory.DOCX,
             defaultFileName = "Project Proposal"
         )
@@ -39,47 +39,33 @@ object DocxGenerator {
 
         val (docTitle, paragraphs) = when (templateId) {
             "docx_meeting" -> {
-                val t = if (title.isNotBlank()) title else "Team Sync & Planning Notes"
+                val t = title.ifBlank { "Meeting Notes" }
                 val p = listOf(
-                    "Date: $dateStr | Attendees: Team Leads, Engineering, Design",
-                    "1. Executive Summary & Review",
-                    "During today's sync, the team reviewed the project milestones, deliverables, and architecture updates. Overall velocity remains strong.",
-                    "2. Key Agenda Items",
-                    "• Item 1: Q4 release schedule alignment and QA validation timeline.",
-                    "• Item 2: Performance optimization and storage framework integration.",
-                    "• Item 3: Design system polish and accessibility verification.",
-                    "3. Action Items & Next Steps",
-                    "• Complete end-to-end testing across all supported formats.",
-                    "• Deploy build candidate for stakeholder review."
+                    "Date: $dateStr",
+                    "1. Agenda Items",
+                    "• ",
+                    "2. Action Items",
+                    "• "
                 )
                 Pair(t, p)
             }
             "docx_proposal" -> {
-                val t = if (title.isNotBlank()) title else "Product Architecture Proposal"
+                val t = title.ifBlank { "Project Proposal" }
                 val p = listOf(
-                    "Prepared on: $dateStr",
+                    "Date: $dateStr",
                     "1. Project Objectives",
-                    "The primary objective of this initiative is to establish a robust, reliable, and fluid document workspace supporting modern OOXML standards.",
                     "2. Scope of Work",
-                    "The scope comprises document creation, structured parsing, in-place cell/paragraph editing, and native PDF vector rendering.",
-                    "3. Architectural Design",
-                    "Utilizing lightweight OOXML compression and streaming parsers ensures sub-50ms opening times with minimal memory footprint.",
-                    "4. Timeline & Milestones",
-                    "• Phase 1: Core Parsing & Storage Integration.",
-                    "• Phase 2: Design System & Liquid Glass Polish.",
-                    "• Phase 3: Final Verification & Security Audits."
+                    "3. Timeline & Milestones"
                 )
                 Pair(t, p)
             }
             else -> {
-                val t = if (title.isNotBlank()) title else "Untitled Document"
+                // Blank Document: Zero prewritten text/paragraphs injected!
+                val t = title
                 val p = if (extraContent.isNotBlank()) {
                     extraContent.split("\n\n", "\n").filter { it.isNotBlank() }
                 } else {
-                    listOf(
-                        "Created on $dateStr with NotOffice563.",
-                        "This is a genuine Microsoft Word (.docx) document created natively on Android. You can view, edit, and share this document across mobile and desktop office suites."
-                    )
+                    emptyList()
                 }
                 Pair(t, p)
             }

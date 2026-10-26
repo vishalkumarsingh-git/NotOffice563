@@ -36,10 +36,20 @@ class DocumentRepository(
         SafHelper.takePersistableUriPermission(context.contentResolver, uri)
         val metadata = SafHelper.queryMetadata(context, uri)
 
-        val uriString = uri.toString()
-        val existing = recentFileDao.getByUri(uriString)
+        val canonicalUriString = uri.normalizeScheme().toString()
+        val rawUriString = uri.toString()
+        val decodedUriString = Uri.decode(rawUriString)
+
+        var existing = recentFileDao.getByUri(canonicalUriString)
+            ?: recentFileDao.getByUri(rawUriString)
+            ?: recentFileDao.getByUri(decodedUriString)
+
+        if (existing != null && existing.uri != canonicalUriString) {
+            recentFileDao.deleteByUri(existing.uri)
+        }
+
         val entity = RecentFileEntity(
-            uri = uriString,
+            uri = canonicalUriString,
             displayName = metadata.displayName,
             mimeType = metadata.mimeType,
             extension = metadata.extension,

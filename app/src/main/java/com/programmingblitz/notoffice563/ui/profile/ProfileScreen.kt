@@ -1,17 +1,8 @@
 package com.programmingblitz.notoffice563.ui.profile
 
-import android.app.Activity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,19 +19,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,15 +38,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -68,21 +51,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.programmingblitz.notoffice563.data.local.AppThemeMode
-import com.programmingblitz.notoffice563.data.local.FileSortOrder
-import com.programmingblitz.notoffice563.data.local.FileViewMode
 import com.programmingblitz.notoffice563.domain.model.UserAccount
 import com.programmingblitz.notoffice563.ui.theme.AccentBlue
 import com.programmingblitz.notoffice563.ui.theme.IncomeGreen
 import com.programmingblitz.notoffice563.ui.theme.SleekShapes
 import com.programmingblitz.notoffice563.ui.theme.SleekSizes
-import com.programmingblitz.notoffice563.util.HapticUtil
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassCard
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 
 /**
- * Redesigned Profile & Settings Screen with clean, minimalist aesthetics.
- * Strictly honest: Never fabricates names, emails, or fake authentication.
+ * Profile Screen — Focused exclusively on account identity, Google Sign-In state,
+ * and account permissions, without duplicating general settings.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,9 +76,9 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
-    val userPrefs by viewModel.userPreferences.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val setupNotice by viewModel.setupNotice.collectAsStateWithLifecycle()
@@ -104,53 +87,18 @@ fun ProfileScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = {
-                            HapticUtil.performSelection(haptic)
-                            onOpenDrawer()
-                        },
-                        modifier = Modifier
-                            .testTag("open_drawer_button")
-                            .size(SleekSizes.buttonSmall)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = "Open navigation drawer",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column {
-                        Text(
-                            text = "Profile & Settings",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (currentUser != null) "Google Account Connected" else "Local Workspace Mode",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTopBar(
+                title = "Account Profile",
+                subtitle = if (currentUser != null) "Google Account Connected" else "Local Workspace Mode",
+                navigationIcon = {
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton(
+                        onClick = onOpenDrawer,
+                        icon = Icons.Filled.Menu,
+                        contentDescription = "Open navigation drawer",
+                        size = 36.dp
+                    )
                 }
-            }
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -160,205 +108,67 @@ fun ProfileScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Account Section
+            // 1. Account Identity Hero Card
             item {
                 AccountCard(
                     currentUser = currentUser,
                     isLoading = isLoading,
                     setupNotice = setupNotice,
-                    onSignIn = {
-                        HapticUtil.performAction(haptic)
-                        viewModel.signInWithGoogle(context)
-                    },
-                    onSignOut = {
-                        HapticUtil.performAction(haptic)
-                        viewModel.requestSignOutConfirmation()
-                    }
+                    isDark = isDark,
+                    onSignIn = { viewModel.signInWithGoogle(context) },
+                    onSignOut = { viewModel.requestSignOutConfirmation() }
                 )
             }
 
-            // 2. Appearance Section
+            // 2. Account Security & Privacy
             item {
-                ProfileSectionCard(
-                    title = "Appearance",
-                    subtitle = "Select application visual theme",
-                    icon = Icons.Filled.Palette
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        ThemeOptionTile(
-                            label = "System",
-                            selected = userPrefs.themeMode == AppThemeMode.SYSTEM,
-                            onClick = {
-                                HapticUtil.performAction(haptic)
-                                viewModel.setTheme(AppThemeMode.SYSTEM)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                        ThemeOptionTile(
-                            label = "Light",
-                            selected = userPrefs.themeMode == AppThemeMode.LIGHT,
-                            onClick = {
-                                HapticUtil.performAction(haptic)
-                                viewModel.setTheme(AppThemeMode.LIGHT)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                        ThemeOptionTile(
-                            label = "Dark",
-                            selected = userPrefs.themeMode == AppThemeMode.DARK,
-                            onClick = {
-                                HapticUtil.performAction(haptic)
-                                viewModel.setTheme(AppThemeMode.DARK)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
-            // 3. Workspace Preferences Section
-            item {
-                ProfileSectionCard(
-                    title = "Preferences",
-                    subtitle = "Configure document layout and sorting",
-                    icon = Icons.Filled.Tune
-                ) {
-                    Text(
-                        text = "Default View Mode",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        ThemeOptionTile(
-                            label = "List View",
-                            selected = userPrefs.viewMode == FileViewMode.LIST,
-                            onClick = {
-                                HapticUtil.performAction(haptic)
-                                viewModel.setViewMode(FileViewMode.LIST)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                        ThemeOptionTile(
-                            label = "Grid View",
-                            selected = userPrefs.viewMode == FileViewMode.GRID,
-                            onClick = {
-                                HapticUtil.performAction(haptic)
-                                viewModel.setViewMode(FileViewMode.GRID)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "Default Sort Order",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FileSortOrder.entries.forEach { sort ->
-                            val isSelected = userPrefs.sortOrder == sort
-                            Row(
+                LiquidGlassCard(isDark = isDark) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(SleekShapes.input)
-                                    .clickable {
-                                        HapticUtil.performSelection(haptic)
-                                        viewModel.setSortOrder(sort)
-                                    }
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(AccentBlue.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(CircleShape)
-                                        .border(
-                                            width = if (isSelected) 5.dp else 1.5.dp,
-                                            color = if (isSelected) AccentBlue else MaterialTheme.colorScheme.outline,
-                                            shape = CircleShape
-                                        )
+                                Icon(
+                                    imageVector = Icons.Filled.Shield,
+                                    contentDescription = null,
+                                    tint = AccentBlue,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(10.dp))
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
                                 Text(
-                                    text = sort.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) AccentBlue else MaterialTheme.colorScheme.onSurface
+                                    text = "Account Security & Privacy",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                                )
+                                Text(
+                                    text = "Strict local document protection",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "• Google Sign-In is optional for profile identification.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "• Local Document Isolation: Your Word, Excel, PowerPoint, and PDF files are stored locally and never synced or uploaded.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                        )
                     }
-                }
-            }
-
-            // 4. Privacy & Architecture Section
-            item {
-                ProfileSectionCard(
-                    title = "Privacy & Data Guarantee",
-                    subtitle = "100% On-Device local processing",
-                    icon = Icons.Filled.Shield
-                ) {
-                    Text(
-                        text = "• Local Storage Only: Documents opened in NotOffice563 remain entirely on your device storage.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "• Android SAF Permissions: File access is granted strictly through Android's Storage Access Framework.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "• Zero File Telemetry: Signing in with Google does not upload, sync, or transmit any user documents to cloud servers.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // 5. About Section
-            item {
-                ProfileSectionCard(
-                    title = "About NotOffice563",
-                    subtitle = "Independent Android document workspace",
-                    icon = Icons.Filled.Info
-                ) {
-                    Text(
-                        text = "NotOffice563 v1.0.0",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Designed with a clean, restrained Material 3 language for a focused document workspace.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "An independent open document viewer and lightweight editor. Not affiliated with Microsoft Corporation.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
 
@@ -371,109 +181,82 @@ fun ProfileScreen(
 
     // Dialogs
     when (val dialog = dialogState) {
-        is ProfileDialogState.MissingConfig -> {
-            // Handled non-blockingly via inline setup notice in AccountCard
-        }
         is ProfileDialogState.Error -> {
-            AlertDialog(
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog(
                 onDismissRequest = { viewModel.dismissDialog() },
-                shape = SleekShapes.dialog,
-                title = {
-                    Text(
-                        text = "Authentication Notice",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = dialog.message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
+                title = "Authentication Notice",
+                isDark = isDark,
                 confirmButton = {
-                    Button(
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                        text = "OK",
                         onClick = { viewModel.dismissDialog() },
-                        shape = SleekShapes.chip
-                    ) {
-                        Text("OK")
-                    }
+                        height = 38.dp
+                    )
                 }
-            )
+            ) {
+                Text(
+                    text = dialog.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                )
+            }
         }
         is ProfileDialogState.ConfirmSignOut -> {
-            AlertDialog(
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog(
                 onDismissRequest = { viewModel.dismissDialog() },
-                shape = SleekShapes.dialog,
-                title = {
-                    Text(
-                        text = "Sign out from Google?",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = "Signing out will disconnect your Google account and return to Local Workspace Mode. Your local documents and notes remain intact.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
+                title = "Sign Out from Google?",
+                isDark = isDark,
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            HapticUtil.performAction(haptic)
-                            viewModel.confirmSignOut()
-                        },
-                        shape = SleekShapes.chip,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text("Sign Out")
-                    }
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                        text = "Sign Out",
+                        onClick = { viewModel.confirmSignOut() },
+                        accentColor = MaterialTheme.colorScheme.error,
+                        height = 38.dp
+                    )
                 },
                 dismissButton = {
-                    TextButton(onClick = { viewModel.dismissDialog() }) {
-                        Text("Cancel")
-                    }
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                        text = "Cancel",
+                        onClick = { viewModel.dismissDialog() },
+                        isPrimary = false,
+                        height = 38.dp
+                    )
                 }
-            )
+            ) {
+                Text(
+                    text = "Signing out will return to Local Workspace Mode. Your local documents and notes remain intact.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                )
+            }
         }
-        null -> {}
+        else -> {}
     }
 }
 
-/**
- * Account Hero Card: Displays real profile info when signed in,
- * or neutral placeholder + prominent Google Sign In button when signed out.
- */
 @Composable
 private fun AccountCard(
     currentUser: UserAccount?,
     isLoading: Boolean,
     setupNotice: String?,
+    isDark: Boolean,
     onSignIn: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    LiquidGlassSurface(
         modifier = modifier
             .fillMaxWidth()
             .testTag("profile_account_card"),
-        shape = SleekShapes.cardLarge,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-        tonalElevation = 2.dp
+        shape = LiquidGlassTokens.ShapeLarge,
+        isDark = isDark,
+        elevation = 4.dp
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (currentUser != null) {
-                // SIGNED-IN STATE (Real details only)
                 Box(
                     modifier = Modifier
                         .size(76.dp)
@@ -513,7 +296,7 @@ private fun AccountCard(
                     text = currentUser.displayName ?: currentUser.email ?: "Google Account",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -524,73 +307,34 @@ private fun AccountCard(
                     Text(
                         text = currentUser.email,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary,
                         textAlign = TextAlign.Center
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Status chip
-                Surface(
-                    shape = SleekShapes.pill,
-                    color = IncomeGreen.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, IncomeGreen.copy(alpha = 0.3f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(IncomeGreen)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Connected with Google",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = IncomeGreen
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sign Out Action
-                OutlinedButton(
+                com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                    text = "Sign Out",
                     onClick = onSignOut,
+                    isPrimary = false,
+                    height = 40.dp,
                     modifier = Modifier
-                        .testTag("sign_out_button")
                         .fillMaxWidth()
-                        .height(SleekSizes.buttonDefault),
-                    shape = SleekShapes.chip,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = "Sign out",
-                        modifier = Modifier.size(SleekSizes.iconSmall)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sign out", fontWeight = FontWeight.SemiBold)
-                }
+                        .testTag("sign_out_button")
+                )
             } else {
-                // SIGNED-OUT STATE (Clean neutral avatar, prominent Google button)
                 Box(
                     modifier = Modifier
                         .size(68.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-                        .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                        .background(if (isDark) Color(0x33FFFFFF) else Color(0x1F000000)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Person,
                         contentDescription = "Neutral Avatar",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary,
                         modifier = Modifier.size(34.dp)
                     )
                 }
@@ -598,269 +342,62 @@ private fun AccountCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Not signed in",
+                    text = "Local Workspace Mode",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Google sign-in is optional. All local document viewing, editing, and note features are fully functional without signing in.",
+                    text = "Google sign-in is optional. Local document browsing, viewing, editing, and saving work 100% offline without signing in.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Prominent Sign in with Google Button
-                Button(
+                com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                    text = if (isLoading) "Connecting..." else "Sign in with Google",
                     onClick = onSignIn,
-                    enabled = !isLoading,
+                    isLoading = isLoading,
+                    accentColor = AccentBlue,
+                    height = 46.dp,
                     modifier = Modifier
-                        .testTag("google_sign_in_button")
                         .fillMaxWidth()
-                        .height(48.dp),
-                    shape = SleekShapes.chip,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp)
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Connecting...",
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    } else {
-                        GoogleLogoIcon(modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Sign in with Google",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
+                        .testTag("google_sign_in_button")
+                )
+
                 if (!setupNotice.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(14.dp))
-                    Surface(
-                        shape = SleekShapes.card,
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-                        modifier = Modifier.fillMaxWidth()
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(LiquidGlassTokens.ShapeSmall)
+                            .background(if (isDark) Color(0x261E283E) else Color(0x1F000000))
+                            .padding(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.Top
-                        ) {
+                        Row(verticalAlignment = Alignment.Top) {
                             Icon(
                                 imageVector = Icons.Filled.Info,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = AccentBlue,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = setupNotice,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
                             )
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-/**
- * Standard Google 'G' 4-color logo drawn cleanly with Compose Canvas paths.
- */
-@Composable
-fun GoogleLogoIcon(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val size = this.size.minDimension
-        val strokeWidth = size * 0.2f
-        val radius = (size - strokeWidth) / 2f
-        val center = Offset(size / 2f, size / 2f)
-
-        // Blue right-arm & upper right arc
-        val blueColor = Color(0xFF4285F4)
-        val redColor = Color(0xFFEA4335)
-        val yellowColor = Color(0xFFFBBC05)
-        val greenColor = Color(0xFF34A853)
-
-        val arcRect = Rect(center.x - radius, center.y - radius, center.x + radius, center.y + radius)
-
-        // Red (top arc ~ 210 to 330 deg)
-        drawArc(
-            color = redColor,
-            startAngle = 200f,
-            sweepAngle = 140f,
-            useCenter = false,
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Yellow (left arc ~ 140 to 200 deg)
-        drawArc(
-            color = yellowColor,
-            startAngle = 130f,
-            sweepAngle = 80f,
-            useCenter = false,
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Green (bottom arc ~ 30 to 140 deg)
-        drawArc(
-            color = greenColor,
-            startAngle = 45f,
-            sweepAngle = 95f,
-            useCenter = false,
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Blue (right arc and center horizontal bar)
-        drawArc(
-            color = blueColor,
-            startAngle = -20f,
-            sweepAngle = 65f,
-            useCenter = false,
-            style = Stroke(width = strokeWidth)
-        )
-
-        // Center crossbar
-        drawLine(
-            color = blueColor,
-            start = Offset(center.x - strokeWidth * 0.2f, center.y),
-            end = Offset(center.x + radius + strokeWidth / 2f, center.y),
-            strokeWidth = strokeWidth
-        )
-    }
-}
-
-@Composable
-private fun ProfileSectionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = SleekShapes.cardLarge,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        tonalElevation = 1.dp
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(SleekShapes.card)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(SleekSizes.iconSmall)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-            Spacer(modifier = Modifier.height(14.dp))
-
-            content()
-        }
-    }
-}
-
-@Composable
-private fun ThemeOptionTile(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val bg by animateColorAsState(
-        targetValue = if (selected) AccentBlue else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        animationSpec = tween(180, easing = FastOutSlowInEasing),
-        label = "themeBg"
-    )
-    val textColor by animateColorAsState(
-        targetValue = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
-        label = "themeText"
-    )
-
-    Surface(
-        shape = SleekShapes.chip,
-        color = bg,
-        border = BorderStroke(
-            1.dp,
-            if (selected) AccentBlue else MaterialTheme.colorScheme.outlineVariant
-        ),
-        modifier = modifier
-            .height(42.dp)
-            .clip(SleekShapes.chip)
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (selected) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-            }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                color = textColor
-            )
         }
     }
 }

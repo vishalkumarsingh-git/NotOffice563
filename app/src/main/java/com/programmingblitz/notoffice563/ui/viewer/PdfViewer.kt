@@ -21,25 +21,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,14 +39,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.programmingblitz.notoffice563.ui.theme.PdfRubyRed
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFloatingToolbar
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 
 @Composable
 fun PdfViewer(
@@ -65,219 +66,308 @@ fun PdfViewer(
     onSaveNote: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     var showNoteDialog by remember { mutableStateOf(false) }
     var noteInput by remember { mutableStateOf("") }
     var showJumpDialog by remember { mutableStateOf(false) }
     var jumpPageInput by remember { mutableStateOf("${state.currentPage + 1}") }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        // PDF Control Toolbar
-        Surface(
-            tonalElevation = 2.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top Liquid Glass PDF Status Header
+            LiquidGlassSurface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                shape = LiquidGlassTokens.ShapeMedium,
+                isDark = isDark,
+                elevation = 4.dp
             ) {
-                // Page Navigation Controls
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { onPageChange(state.currentPage - 1) },
-                        enabled = state.currentPage > 0,
-                        modifier = Modifier.testTag("pdf_prev_page")
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous page")
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.clickable {
-                            jumpPageInput = "${state.currentPage + 1}"
-                            showJumpDialog = true
-                        }
-                    ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LiquidGlassBadge(
+                            text = "PDF DOCUMENT",
+                            color = PdfRubyRed,
+                            containerColor = PdfRubyRed.copy(alpha = 0.18f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Page ${state.currentPage + 1} of ${state.pageCount}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
                         )
                     }
 
-                    IconButton(
-                        onClick = { onPageChange(state.currentPage + 1) },
-                        enabled = state.currentPage < state.pageCount - 1,
-                        modifier = Modifier.testTag("pdf_next_page")
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next page")
+                    Icon(
+                        imageVector = Icons.Filled.PictureAsPdf,
+                        contentDescription = null,
+                        tint = PdfRubyRed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            // Rendered PDF Page Canvas (Solid Reading Surface)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val canvasBg = if (isDark) LiquidGlassTokens.DocumentCanvasDark else Color(0xFFE2E8F0)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .shadow(4.dp, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(canvasBg)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (state.renderedPageBitmap != null) {
+                        Box(
+                            modifier = Modifier
+                                .shadow(10.dp, RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White)
+                        ) {
+                            Image(
+                                bitmap = state.renderedPageBitmap.asImageBitmap(),
+                                contentDescription = "PDF Page ${state.currentPage + 1}",
+                                modifier = Modifier.fillMaxWidth(fraction = (state.zoomFactor).coerceIn(0.5f, 1.0f)),
+                                contentScale = ContentScale.FillWidth
+                            )
+                        }
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(44.dp),
+                                color = PdfRubyRed,
+                                strokeWidth = 3.dp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Rendering PDF page...",
+                                style = TextStyle(
+                                    fontSize = 13.sp,
+                                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                                )
+                            )
+                        }
                     }
                 }
+            }
 
-                // Zoom & Note Actions
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { onZoomChange(state.zoomFactor - 0.25f) },
-                        enabled = state.zoomFactor > 0.6f
+            // Bottom Floating Liquid Glass Navigation & Zoom Toolbar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LiquidGlassFloatingToolbar(isDark = isDark) {
+                    // Page Prev
+                    LiquidGlassIconButton(
+                        onClick = { onPageChange(state.currentPage - 1) },
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Previous Page",
+                        enabled = state.currentPage > 0,
+                        size = 36.dp,
+                        modifier = Modifier.testTag("pdf_prev_page")
+                    )
+
+                    // Page Pill
+                    Box(
+                        modifier = Modifier
+                            .clip(LiquidGlassTokens.ShapeCapsule)
+                            .background(if (isDark) Color(0x33FFFFFF) else Color(0x1F000000))
+                            .clickable {
+                                jumpPageInput = "${state.currentPage + 1}"
+                                showJumpDialog = true
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Filled.ZoomOut, contentDescription = "Zoom out")
+                        Text(
+                            text = "${state.currentPage + 1} / ${state.pageCount}",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                            )
+                        )
                     }
+
+                    // Page Next
+                    LiquidGlassIconButton(
+                        onClick = { onPageChange(state.currentPage + 1) },
+                        icon = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Next Page",
+                        enabled = state.currentPage < state.pageCount - 1,
+                        size = 36.dp,
+                        modifier = Modifier.testTag("pdf_next_page")
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(20.dp)
+                            .background(if (isDark) Color.White.copy(0.2f) else Color.Black.copy(0.12f))
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Zoom Out
+                    LiquidGlassIconButton(
+                        onClick = { onZoomChange(state.zoomFactor - 0.25f) },
+                        icon = Icons.Filled.ZoomOut,
+                        contentDescription = "Zoom Out",
+                        enabled = state.zoomFactor > 0.6f,
+                        size = 36.dp
+                    )
 
                     Text(
                         text = "${(state.zoomFactor * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                        ),
+                        modifier = Modifier.padding(horizontal = 2.dp)
                     )
 
-                    IconButton(
+                    // Zoom In
+                    LiquidGlassIconButton(
                         onClick = { onZoomChange(state.zoomFactor + 0.25f) },
-                        enabled = state.zoomFactor < 2.5f
-                    ) {
-                        Icon(Icons.Filled.ZoomIn, contentDescription = "Zoom in")
-                    }
+                        icon = Icons.Filled.ZoomIn,
+                        contentDescription = "Zoom In",
+                        enabled = state.zoomFactor < 2.5f,
+                        size = 36.dp
+                    )
 
-                    IconButton(
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(20.dp)
+                            .background(if (isDark) Color.White.copy(0.2f) else Color.Black.copy(0.12f))
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Page Note
+                    LiquidGlassIconButton(
                         onClick = { showNoteDialog = true },
+                        icon = Icons.Filled.EditNote,
+                        contentDescription = "Page Note",
+                        activeColor = PdfRubyRed,
+                        size = 36.dp,
                         modifier = Modifier.testTag("pdf_notes_button")
-                    ) {
-                        Icon(
-                            Icons.Filled.EditNote,
-                            contentDescription = "Page Note",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        }
-
-        // Info banner explaining local notes behavior
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "Notes are saved per (file + page) in NotOffice563 without altering the original PDF.",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        // Rendered PDF Page View
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(Color(0xFFE2E8F0))
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (state.renderedPageBitmap != null) {
-                Card(
-                    shape = RoundedCornerShape(4.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Image(
-                        bitmap = state.renderedPageBitmap.asImageBitmap(),
-                        contentDescription = "PDF Page ${state.currentPage + 1}",
-                        modifier = Modifier.fillMaxWidth(fraction = (state.zoomFactor).coerceIn(0.5f, 1.0f)),
-                        contentScale = ContentScale.FillWidth
                     )
                 }
-            } else {
-                CircularProgressIndicator(modifier = Modifier.size(48.dp))
             }
         }
     }
 
-    // Page Note Dialog
+    // Page Note Liquid Glass Dialog
     if (showNoteDialog) {
-        AlertDialog(
+        LiquidGlassDialog(
             onDismissRequest = { showNoteDialog = false },
-            title = { Text("Note for Page ${state.currentPage + 1}") },
-            text = {
-                Column {
-                    Text(
-                        text = "Store a local text note for this page:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = noteInput,
-                        onValueChange = { noteInput = it },
-                        placeholder = { Text("Type key takeaway or summary here...") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp)
-                    )
-                }
-            },
+            title = "Note for Page ${state.currentPage + 1}",
+            isDark = isDark,
             confirmButton = {
-                Button(
+                LiquidGlassButton(
+                    text = "Save Note",
                     onClick = {
                         showNoteDialog = false
                         onSaveNote("page:${state.currentPage}", noteInput)
-                    }
-                ) {
-                    Text("Save Note")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showNoteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    // Jump to Page Dialog
-    if (showJumpDialog) {
-        AlertDialog(
-            onDismissRequest = { showJumpDialog = false },
-            title = { Text("Jump to Page") },
-            text = {
-                OutlinedTextField(
-                    value = jumpPageInput,
-                    onValueChange = { jumpPageInput = it },
-                    label = { Text("Page Number (1 - ${state.pageCount})") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    },
+                    accentColor = PdfRubyRed,
+                    height = 40.dp
                 )
             },
+            dismissButton = {
+                LiquidGlassButton(
+                    text = "Cancel",
+                    onClick = { showNoteDialog = false },
+                    isPrimary = false,
+                    height = 40.dp
+                )
+            }
+        ) {
+            Text(
+                text = "Store a personal note for Page ${state.currentPage + 1} without modifying the PDF document:",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                )
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
+                value = noteInput,
+                onValueChange = { noteInput = it },
+                placeholder = { Text("Type key takeaway or notes...") },
+                textStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
+            )
+        }
+    }
+
+    // Jump to Page Liquid Glass Dialog
+    if (showJumpDialog) {
+        LiquidGlassDialog(
+            onDismissRequest = { showJumpDialog = false },
+            title = "Jump to Page",
+            isDark = isDark,
             confirmButton = {
-                Button(
+                LiquidGlassButton(
+                    text = "Go",
                     onClick = {
                         val target = jumpPageInput.toIntOrNull()
                         if (target != null && target in 1..state.pageCount) {
                             onPageChange(target - 1)
                         }
                         showJumpDialog = false
-                    }
-                ) {
-                    Text("Go")
-                }
+                    },
+                    accentColor = PdfRubyRed,
+                    height = 40.dp
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showJumpDialog = false }) {
-                    Text("Cancel")
-                }
+                LiquidGlassButton(
+                    text = "Cancel",
+                    onClick = { showJumpDialog = false },
+                    isPrimary = false,
+                    height = 40.dp
+                )
             }
-        )
+        ) {
+            OutlinedTextField(
+                value = jumpPageInput,
+                onValueChange = { jumpPageInput = it },
+                label = { Text("Page Number (1 - ${state.pageCount})") },
+                singleLine = true,
+                textStyle = TextStyle(
+                    fontSize = 15.sp,
+                    color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

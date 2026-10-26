@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -512,3 +513,165 @@ fun LiquidGlassBadge(
         )
     }
 }
+
+/**
+ * Custom Liquid Glass Floating Toolbar container.
+ */
+@Composable
+fun LiquidGlassFloatingToolbar(
+    modifier: Modifier = Modifier,
+    isDark: Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f,
+    content: @Composable RowScope.() -> Unit
+) {
+    LiquidGlassSurface(
+        modifier = modifier,
+        shape = LiquidGlassTokens.ShapeCapsule,
+        isDark = isDark,
+        elevation = 6.dp,
+        borderWidth = 1.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            content = content
+        )
+    }
+}
+
+/**
+ * Custom Liquid Glass Icon Button with touch feedback and specular highlight.
+ */
+@Composable
+fun LiquidGlassIconButton(
+    onClick: () -> Unit,
+    icon: ImageVector,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    isActive: Boolean = false,
+    activeColor: Color = LiquidGlassTokens.AzureGlass,
+    enabled: Boolean = true,
+    size: Dp = 38.dp
+) {
+    val haptic = LocalHapticFeedback.current
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && enabled) 0.92f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "glassIconBtnScale"
+    )
+
+    val bgBrush = if (isActive) {
+        Brush.verticalGradient(listOf(activeColor, activeColor.copy(alpha = 0.85f)))
+    } else {
+        if (isDark) {
+            Brush.verticalGradient(listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF)))
+        } else {
+            Brush.verticalGradient(listOf(Color(0xF0FFFFFF), Color(0xDCF0F4FA)))
+        }
+    }
+
+    val iconColor = if (isActive) {
+        Color.White
+    } else {
+        if (!enabled) {
+            if (isDark) LiquidGlassTokens.DarkTextTertiary else LiquidGlassTokens.LightTextTertiary
+        } else {
+            if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(CircleShape)
+            .background(bgBrush)
+            .border(
+                1.dp,
+                if (isActive) Color.White.copy(alpha = 0.4f) else (if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)),
+                CircleShape
+            )
+            .pointerInput(enabled) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        HapticUtil.performSelection(haptic)
+                        onClick()
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = iconColor,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+/**
+ * Custom Liquid Glass Dialog replacement.
+ */
+@Composable
+fun LiquidGlassDialog(
+    onDismissRequest: () -> Unit,
+    title: String,
+    modifier: Modifier = Modifier,
+    isDark: Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f,
+    confirmButton: (@Composable () -> Unit)? = null,
+    dismissButton: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRequest) {
+        LiquidGlassSurface(
+            modifier = modifier.fillMaxWidth(0.92f),
+            shape = LiquidGlassTokens.ShapeLarge,
+            isDark = isDark,
+            elevation = 16.dp,
+            borderWidth = 1.2.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = title,
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                    )
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                content()
+                Spacer(modifier = Modifier.height(18.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (dismissButton != null) {
+                        dismissButton()
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    if (confirmButton != null) {
+                        confirmButton()
+                    }
+                }
+            }
+        }
+    }
+}
+

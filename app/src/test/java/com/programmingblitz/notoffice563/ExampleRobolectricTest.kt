@@ -88,7 +88,7 @@ class ExampleRobolectricTest {
     org.junit.Assert.assertTrue(sidebarRoutes.contains("profile"))
     org.junit.Assert.assertTrue(bottomNavRoutes.contains("profile"))
     org.junit.Assert.assertTrue(sidebarRoutes.contains("home"))
-    org.junit.Assert.assertTrue(sidebarRoutes.contains("files"))
+    org.junit.Assert.assertTrue(sidebarRoutes.any { it.startsWith("files") })
     org.junit.Assert.assertTrue(sidebarRoutes.contains("recent"))
     org.junit.Assert.assertTrue(sidebarRoutes.contains("settings"))
   }

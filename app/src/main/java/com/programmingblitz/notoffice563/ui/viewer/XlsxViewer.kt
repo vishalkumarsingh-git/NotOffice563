@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,23 +19,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Functions
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.TableChart
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,6 +51,10 @@ import androidx.compose.ui.unit.sp
 import com.programmingblitz.notoffice563.document.parser.XlsxParser
 import com.programmingblitz.notoffice563.ui.theme.ExcelSheetContainer
 import com.programmingblitz.notoffice563.ui.theme.ExcelSheetGreen
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSegmentedControl
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 
 @Composable
 fun XlsxViewer(
@@ -50,181 +63,255 @@ fun XlsxViewer(
     onSelectCell: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val currentSheet = state.parsedSpreadsheet.sheets.getOrNull(state.currentSheetIndex)
         ?: state.parsedSpreadsheet.sheets.firstOrNull()
 
     val horizontalScrollState = rememberScrollState()
 
+    // Active Formula Bar State
+    var formulaInput by remember { mutableStateOf(state.selectedCellValue) }
+
+    // Keep formula input in sync when cell selection changes
+    remember(state.selectedCellRef, state.selectedCellValue) {
+        formulaInput = state.selectedCellValue
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
-        // Sheet Tabs Selector
-        if (state.parsedSpreadsheet.sheets.size > 1) {
-            ScrollableTabRow(
-                selectedTabIndex = state.currentSheetIndex,
-                edgePadding = 16.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                state.parsedSpreadsheet.sheets.forEachIndexed { index, sheet ->
-                    Tab(
-                        selected = state.currentSheetIndex == index,
-                        onClick = { onSelectSheet(index) },
-                        text = {
-                            Text(
-                                text = sheet.name,
-                                fontWeight = if (state.currentSheetIndex == index) FontWeight.Bold else FontWeight.Normal
+        // Top Liquid Glass Status Bar with Sheet Tabs
+        LiquidGlassSurface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            shape = LiquidGlassTokens.ShapeMedium,
+            isDark = isDark,
+            elevation = 4.dp
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LiquidGlassBadge(
+                            text = "EXCEL WORKBOOK",
+                            color = ExcelSheetGreen,
+                            containerColor = ExcelSheetGreen.copy(alpha = 0.18f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${state.parsedSpreadsheet.sheets.size} sheets • ${currentSheet?.maxColumns ?: 0} cols",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
                             )
-                        }
+                        )
+                    }
+                }
+
+                if (state.parsedSpreadsheet.sheets.size > 1) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LiquidGlassSegmentedControl(
+                        items = state.parsedSpreadsheet.sheets.map { it.name },
+                        selectedIndex = state.currentSheetIndex,
+                        onSelectIndex = onSelectSheet,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
         }
 
-        // Cell Inspector / Formula Bar
-        Surface(
-            tonalElevation = 2.dp,
-            modifier = Modifier.fillMaxWidth()
+        // Liquid Glass Formula & Cell Inspector Bar
+        LiquidGlassSurface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+            shape = LiquidGlassTokens.ShapeCapsule,
+            isDark = isDark,
+            elevation = 3.dp
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = ExcelSheetContainer
+                // Cell Coordinate Badge (e.g. A1, B4)
+                Box(
+                    modifier = Modifier
+                        .clip(LiquidGlassTokens.ShapeCapsule)
+                        .background(ExcelSheetGreen.copy(alpha = 0.2f))
+                        .border(1.dp, ExcelSheetGreen.copy(alpha = 0.5f), LiquidGlassTokens.ShapeCapsule)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = state.selectedCellRef.ifEmpty { "A1" },
-                        color = ExcelSheetGreen,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        style = TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ExcelSheetGreen
+                        )
                     )
                 }
+
                 Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = state.selectedCellValue.ifEmpty { "fx (empty)" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (state.selectedCellValue.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+
+                // Formula fx Icon
+                Icon(
+                    imageVector = Icons.Filled.Functions,
+                    contentDescription = "Formula",
+                    tint = ExcelSheetGreen,
+                    modifier = Modifier.size(18.dp)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Interactive Formula Bar Input
+                BasicTextField(
+                    value = formulaInput,
+                    onValueChange = {
+                        formulaInput = it
+                        onSelectCell(state.selectedCellRef.ifEmpty { "A1" }, it)
+                    },
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                    ),
+                    cursorBrush = SolidColor(ExcelSheetGreen),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        onSelectCell(state.selectedCellRef.ifEmpty { "A1" }, formulaInput)
+                    }),
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        // Notice banner
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(ExcelSheetContainer)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Filled.Info, contentDescription = null, tint = ExcelSheetGreen, modifier = Modifier.size(14.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "Scroll horizontally and vertically to browse sheet cells. Tap any cell to inspect.",
-                fontSize = 11.sp,
-                color = ExcelSheetGreen
-            )
-        }
-
-        // Spreadsheet Grid
+        // Spreadsheet Grid (Real, Excel-style Grid Engine)
         if (currentSheet != null) {
             val cellWidth = 100.dp
             val rowHeaderWidth = 46.dp
             val rowHeight = 36.dp
 
-            Column(
+            val gridBg = if (isDark) LiquidGlassTokens.DarkBaseBackground else Color(0xFFF8FAFC)
+            val headerBg = if (isDark) Color(0xFF131A29) else Color(0xFFE2E8F0)
+            val headerText = if (isDark) LiquidGlassTokens.DarkTextSecondary else Color(0xFF475569)
+            val gridBorder = if (isDark) LiquidGlassTokens.DocumentGridBorderDark else LiquidGlassTokens.DocumentGridBorderLight
+            val cellBg = if (isDark) LiquidGlassTokens.DocumentCanvasDark else LiquidGlassTokens.DocumentCanvasLight
+            val cellText = if (isDark) LiquidGlassTokens.DarkTextPrimary else Color(0xFF0F172A)
+
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .horizontalScroll(horizontalScrollState)
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(gridBg)
+                    .border(1.dp, if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
             ) {
-                // Column Header Row: (corner + A, B, C...)
-                Row(
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(horizontalScrollState)
                 ) {
-                    // Top-left corner
-                    Box(
-                        modifier = Modifier
-                            .width(rowHeaderWidth)
-                            .height(rowHeight)
-                            .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("", fontSize = 11.sp)
-                    }
-
-                    // Column letters
-                    for (c in 0 until currentSheet.maxColumns) {
-                        val colLetter = XlsxParser.indexToColumnLetter(c)
+                    // Header Row (Corner + Column Letters A, B, C...)
+                    Row(modifier = Modifier.background(headerBg)) {
                         Box(
                             modifier = Modifier
-                                .width(cellWidth)
+                                .width(rowHeaderWidth)
                                 .height(rowHeight)
-                                .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                .border(0.5.dp, gridBorder),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = colLetter,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "◩",
+                                style = TextStyle(fontSize = 12.sp, color = headerText)
                             )
                         }
-                    }
-                }
 
-                // Grid Body
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    itemsIndexed(currentSheet.rows) { rowIndex, rowList ->
-                        Row(modifier = Modifier.height(rowHeight)) {
-                            // Row number
+                        for (c in 0 until currentSheet.maxColumns) {
+                            val colLetter = XlsxParser.indexToColumnLetter(c)
                             Box(
                                 modifier = Modifier
-                                    .width(rowHeaderWidth)
+                                    .width(cellWidth)
                                     .height(rowHeight)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                                    .border(0.5.dp, gridBorder)
+                                    .background(headerBg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "${rowIndex + 1}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = colLetter,
+                                    style = TextStyle(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = headerText
+                                    )
                                 )
                             }
+                        }
+                    }
 
-                            // Row cells
-                            for (colIndex in 0 until currentSheet.maxColumns) {
-                                val cellVal = rowList.getOrNull(colIndex) ?: ""
-                                val cellRef = "${XlsxParser.indexToColumnLetter(colIndex)}${rowIndex + 1}"
-                                val isSelected = state.selectedCellRef == cellRef
-
+                    // Grid Rows Body
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        itemsIndexed(currentSheet.rows) { rowIndex, rowList ->
+                            Row(modifier = Modifier.height(rowHeight)) {
+                                // Row Number Header
                                 Box(
                                     modifier = Modifier
-                                        .width(cellWidth)
+                                        .width(rowHeaderWidth)
                                         .height(rowHeight)
-                                        .background(
-                                            if (isSelected) ExcelSheetContainer else MaterialTheme.colorScheme.surface
-                                        )
-                                        .border(
-                                            width = if (isSelected) 1.5.dp else 0.5.dp,
-                                            color = if (isSelected) ExcelSheetGreen else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                                        )
-                                        .clickable { onSelectCell(cellRef, cellVal) }
-                                        .padding(horizontal = 6.dp),
-                                    contentAlignment = Alignment.CenterStart
+                                        .background(headerBg)
+                                        .border(0.5.dp, gridBorder),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = cellVal,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        text = "${rowIndex + 1}",
+                                        style = TextStyle(
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = headerText
+                                        )
                                     )
+                                }
+
+                                // Cells in Row
+                                for (colIndex in 0 until currentSheet.maxColumns) {
+                                    val cellVal = rowList.getOrNull(colIndex) ?: ""
+                                    val cellRef = "${XlsxParser.indexToColumnLetter(colIndex)}${rowIndex + 1}"
+                                    val isSelected = state.selectedCellRef == cellRef
+
+                                    Box(
+                                        modifier = Modifier
+                                            .width(cellWidth)
+                                            .height(rowHeight)
+                                            .background(
+                                                if (isSelected) ExcelSheetGreen.copy(alpha = 0.15f) else cellBg
+                                            )
+                                            .border(
+                                                width = if (isSelected) 2.dp else 0.5.dp,
+                                                color = if (isSelected) ExcelSheetGreen else gridBorder
+                                            )
+                                            .clickable {
+                                                onSelectCell(cellRef, cellVal)
+                                            }
+                                            .padding(horizontal = 8.dp),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) {
+                                        Text(
+                                            text = if (isSelected && formulaInput != state.selectedCellValue) formulaInput else cellVal,
+                                            style = TextStyle(
+                                                fontSize = 12.sp,
+                                                color = if (isSelected) ExcelSheetGreen else cellText,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
                             }
                         }

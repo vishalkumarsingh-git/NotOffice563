@@ -33,10 +33,11 @@ data class FilesUiState(
 
 class FilesViewModel(
     private val repository: DocumentRepository,
-    private val preferences: AppPreferences
+    private val preferences: AppPreferences,
+    initialCategory: DocumentCategory = DocumentCategory.ALL
 ) : ViewModel() {
 
-    private val _selectedCategory = MutableStateFlow(DocumentCategory.ALL)
+    private val _selectedCategory = MutableStateFlow(initialCategory)
     private val _searchQuery = MutableStateFlow("")
     private val _messageEvents = MutableSharedFlow<String>()
     val messageEvents: SharedFlow<String> = _messageEvents.asSharedFlow()

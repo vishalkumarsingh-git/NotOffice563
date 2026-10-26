@@ -304,7 +304,7 @@ fun MainAppContent(
                             navController.navigate(Screen.Viewer.createRoute(uri))
                         },
                         onNavigateToCategory = { category ->
-                            navController.navigate(Screen.Files.route)
+                            navController.navigate(Screen.Files.createRoute(category))
                         },
                         onNavigateToSearch = {
                             navController.navigate(Screen.Search.route)
@@ -322,12 +322,23 @@ fun MainAppContent(
                 }
 
                 // 2. Unified Files Browser
-                composable(Screen.Files.route) {
+                composable(
+                    route = Screen.Files.route,
+                    arguments = listOf(navArgument("category") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    })
+                ) { backStackEntry ->
+                    val categoryArg = backStackEntry.arguments?.getString("category")
+                    val initialCategory = categoryArg?.let { runCatching { DocumentCategory.valueOf(it) }.getOrNull() } ?: DocumentCategory.ALL
+
                     val filesViewModel: FilesViewModel = viewModel(
+                        key = categoryArg ?: "ALL",
                         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
                             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                                 @Suppress("UNCHECKED_CAST")
-                                return FilesViewModel(repository, preferences) as T
+                                return FilesViewModel(repository, preferences, initialCategory) as T
                             }
                         }
                     )
@@ -424,7 +435,7 @@ fun MainAppContent(
                     arguments = listOf(navArgument("encodedUri") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val encodedUri = backStackEntry.arguments?.getString("encodedUri") ?: ""
-                    val decodedUri = URLDecoder.decode(encodedUri, StandardCharsets.UTF_8.toString())
+                    val decodedUri = Uri.decode(encodedUri)
 
                     val viewerViewModel: ViewerViewModel = viewModel(
                         key = decodedUri,

@@ -11,21 +11,21 @@ object PptxGenerator {
         DocumentStarterTemplate(
             id = "pptx_blank",
             title = "Blank Presentation",
-            description = "Title and content slides ready for your presentation",
+            description = "Clean presentation canvas ready for your slides",
             format = DocumentFormatCategory.PPTX,
             defaultFileName = "New Presentation"
         ),
         DocumentStarterTemplate(
             id = "pptx_pitch",
-            title = "Business Pitch Deck",
-            description = "Slides for Problem & Vision, Market Opportunity, and Product Roadmap",
+            title = "Pitch Deck Template",
+            description = "Slide layout for problem, vision, market, and roadmap",
             format = DocumentFormatCategory.PPTX,
             defaultFileName = "Pitch Deck"
         ),
         DocumentStarterTemplate(
             id = "pptx_status",
-            title = "Sprint Status Report",
-            description = "Sprint summary, completed deliverables, and next priorities",
+            title = "Status Report Template",
+            description = "Slide layout for summary, deliverables, and next priorities",
             format = DocumentFormatCategory.PPTX,
             defaultFileName = "Status Report"
         )
@@ -40,68 +40,24 @@ object PptxGenerator {
         val slides: List<SlideData> = when (templateId) {
             "pptx_pitch" -> listOf(
                 SlideData(
-                    title = if (presentationTitle.isNotBlank()) presentationTitle else "NotOffice563 Pitch Deck",
-                    bullets = listOf(
-                        "Next-Generation Document Workspace for Mobile",
-                        "Focused, private, and 100% on-device document intelligence."
-                    )
+                    title = presentationTitle.ifBlank { "Project Overview" },
+                    bullets = emptyList()
                 ),
                 SlideData(
-                    title = "Market Opportunity & Pain Points",
-                    bullets = listOf(
-                        "Modern users require offline-first, private document viewing without cloud bloat.",
-                        "Heavy office suites impose aggressive subscriptions and account gates.",
-                        "NotOffice563 bridges local SAF storage with instant sub-50ms opening speeds."
-                    )
-                ),
-                SlideData(
-                    title = "Execution Roadmap & Growth",
-                    bullets = listOf(
-                        "Milestone 1: Robust OOXML parsing and editing for Word, Excel, and PowerPoint.",
-                        "Milestone 2: iOS 26 Liquid Glass-inspired design system with smooth tactile haptics.",
-                        "Milestone 3: Native PDF vector generation and annotations engine."
-                    )
+                    title = "Market Opportunity",
+                    bullets = emptyList()
                 )
             )
             "pptx_status" -> listOf(
                 SlideData(
-                    title = if (presentationTitle.isNotBlank()) presentationTitle else "Sprint Status Update",
-                    bullets = listOf(
-                        "Bi-Weekly Progress & Milestone Review",
-                        "Engineering & Design Operations"
-                    )
-                ),
-                SlideData(
-                    title = "Key Accomplishments",
-                    bullets = listOf(
-                        "Migrated package namespace to com.programmingblitz.notoffice563.",
-                        "Zero-trust Firebase Firestore security rules deployed and verified with unit tests.",
-                        "Resolved Google Web Client ID setup with automatic resource resolution."
-                    )
-                ),
-                SlideData(
-                    title = "Blockers & Next Steps",
-                    bullets = listOf(
-                        "No critical blockers reported; velocity at 100% capacity.",
-                        "Complete end-to-end document creation verification for DOCX, XLSX, PPTX, and PDF."
-                    )
+                    title = presentationTitle.ifBlank { "Sprint Status Update" },
+                    bullets = emptyList()
                 )
             )
             else -> listOf(
                 SlideData(
-                    title = if (presentationTitle.isNotBlank()) presentationTitle else "Untitled Presentation",
-                    bullets = listOf(
-                        "Presented with NotOffice563",
-                        "Professional slides designed for high readability."
-                    )
-                ),
-                SlideData(
-                    title = "Overview & Key Takeaways",
-                    bullets = listOf(
-                        "First bullet point detailing key project outcomes.",
-                        "Second bullet point highlighting architecture and performance.",
-                        "Summary of recommendations and action steps."
-                    )
+                    title = presentationTitle,
+                    bullets = emptyList()
                 )
             )
         }
