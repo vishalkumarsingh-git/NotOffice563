@@ -1,0 +1,207 @@
+package com.programmingblitz.notoffice563.document.generator
+
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
+object XlsxGenerator {
+
+    val templates = listOf(
+        DocumentStarterTemplate(
+            id = "xlsx_blank",
+            title = "Blank Spreadsheet",
+            description = "Empty grid ready for custom tables and formulas",
+            format = DocumentFormatCategory.XLSX,
+            defaultFileName = "New Spreadsheet"
+        ),
+        DocumentStarterTemplate(
+            id = "xlsx_budget",
+            title = "Monthly Budget",
+            description = "Expense categories, planned allocations, and actual spending",
+            format = DocumentFormatCategory.XLSX,
+            defaultFileName = "Monthly Budget"
+        ),
+        DocumentStarterTemplate(
+            id = "xlsx_tracker",
+            title = "Project Tracker",
+            description = "Task list with assignees, status, priorities, and deadlines",
+            format = DocumentFormatCategory.XLSX,
+            defaultFileName = "Project Tracker"
+        )
+    )
+
+    fun generate(templateId: String, sheetName: String = "Sheet1"): ByteArray {
+        val rows: List<List<String>> = when (templateId) {
+            "xlsx_budget" -> listOf(
+                listOf("Category", "Budgeted ($)", "Actual ($)", "Difference ($)", "Status"),
+                listOf("Housing & Rent", "1500", "1500", "0", "On Track"),
+                listOf("Groceries & Food", "600", "550", "50", "Under Budget"),
+                listOf("Utilities & Internet", "250", "270", "-20", "Over Budget"),
+                listOf("Transportation & Fuel", "200", "180", "20", "Under Budget"),
+                listOf("Healthcare & Insurance", "180", "180", "0", "On Track"),
+                listOf("Entertainment & Dining", "250", "220", "30", "Under Budget"),
+                listOf("Emergency Fund Savings", "500", "500", "0", "Funded"),
+                listOf("Total Expenses", "3480", "3400", "80", "Net Positive")
+            )
+            "xlsx_tracker" -> listOf(
+                listOf("Task ID", "Task Title", "Assignee", "Priority", "Status", "Due Date"),
+                listOf("TSK-101", "Design System Polish", "Alex M.", "High", "In Progress", "Nov 15"),
+                listOf("TSK-102", "OOXML Generator Tests", "David K.", "Urgent", "Completed", "Nov 12"),
+                listOf("TSK-103", "SAF Permissions Audit", "Sarah L.", "Medium", "In Review", "Nov 18"),
+                listOf("TSK-104", "Offline Document Viewer", "Alex M.", "High", "In Progress", "Nov 20"),
+                listOf("TSK-105", "Release Candidate Build", "Team", "Urgent", "Pending", "Nov 25")
+            )
+            else -> listOf(
+                listOf("Item", "Description", "Value", "Notes"),
+                listOf("Row 1", "Sample Entry A", "100", "Ready"),
+                listOf("Row 2", "Sample Entry B", "250", "Review"),
+                listOf("Row 3", "Sample Entry C", "400", "Approved")
+            )
+        }
+
+        return buildXlsxZip(sheetName, rows)
+    }
+
+    private fun buildXlsxZip(sheetName: String, rows: List<List<String>>): ByteArray {
+        val bos = ByteArrayOutputStream()
+        ZipOutputStream(bos).use { zos ->
+            // 1. [Content_Types].xml
+            zos.putNextEntry(ZipEntry("[Content_Types].xml"))
+            val contentTypes = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+    <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+    <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+</Types>"""
+            zos.write(contentTypes.toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+
+            // 2. _rels/.rels
+            zos.putNextEntry(ZipEntry("_rels/.rels"))
+            val rootRels = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+</Relationships>"""
+            zos.write(rootRels.toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+
+            // 3. xl/_rels/workbook.xml.rels
+            zos.putNextEntry(ZipEntry("xl/_rels/workbook.xml.rels"))
+            val wbRels = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>"""
+            zos.write(wbRels.toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+
+            // 4. xl/workbook.xml
+            zos.putNextEntry(ZipEntry("xl/workbook.xml"))
+            val workbookXml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+    <sheets>
+        <sheet name="${escapeXml(sheetName)}" sheetId="1" r:id="rId1"/>
+    </sheets>
+</workbook>"""
+            zos.write(workbookXml.toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+
+            // 5. xl/styles.xml
+            zos.putNextEntry(ZipEntry("xl/styles.xml"))
+            val stylesXml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <fonts count="2">
+        <font><sz val="11"/><name val="Calibri"/></font>
+        <font><b/><sz val="11"/><name val="Calibri"/></font>
+    </fonts>
+    <fills count="2">
+        <fill><patternFill patternType="none"/></fill>
+        <fill><patternFill patternType="gray125"/></fill>
+    </fills>
+    <borders count="1">
+        <border><left/><right/><top/><bottom/><diagonal/></border>
+    </borders>
+    <cellStyleXfs count="1">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+    </cellStyleXfs>
+    <cellXfs count="2">
+        <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+        <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    </cellXfs>
+</styleSheet>"""
+            zos.write(stylesXml.toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+
+            // 6. docProps/core.xml
+            zos.putNextEntry(ZipEntry("docProps/core.xml"))
+            val coreProps = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+    xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>${escapeXml(sheetName)}</dc:title>
+    <dc:creator>NotOffice563</dc:creator>
+</cp:coreProperties>"""
+            zos.write(coreProps.toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+
+            // 7. xl/worksheets/sheet1.xml
+            zos.putNextEntry(ZipEntry("xl/worksheets/sheet1.xml"))
+            val sheetBuilder = StringBuilder()
+            sheetBuilder.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <sheetData>
+""")
+            for ((rowIndex, row) in rows.withIndex()) {
+                val rNum = rowIndex + 1
+                val isHeader = rowIndex == 0
+                val styleAttr = if (isHeader) " s=\"1\"" else ""
+
+                sheetBuilder.append("        <row r=\"$rNum\">\n")
+                for ((colIndex, cellVal) in row.withIndex()) {
+                    val colLetter = getColumnLetter(colIndex)
+                    val cellRef = "$colLetter$rNum"
+                    val isNumber = cellVal.toDoubleOrNull() != null && !isHeader
+
+                    if (isNumber) {
+                        sheetBuilder.append("            <c r=\"$cellRef\"$styleAttr><v>$cellVal</v></c>\n")
+                    } else {
+                        sheetBuilder.append("            <c r=\"$cellRef\" t=\"inlineStr\"$styleAttr><is><t>${escapeXml(cellVal)}</t></is></c>\n")
+                    }
+                }
+                sheetBuilder.append("        </row>\n")
+            }
+
+            sheetBuilder.append("""    </sheetData>
+</worksheet>""")
+            zos.write(sheetBuilder.toString().toByteArray(StandardCharsets.UTF_8))
+            zos.closeEntry()
+        }
+        return bos.toByteArray()
+    }
+
+    private fun getColumnLetter(index: Int): String {
+        var num = index + 1
+        val result = StringBuilder()
+        while (num > 0) {
+            val rem = (num - 1) % 26
+            result.insert(0, ('A' + rem))
+            num = (num - 1) / 26
+        }
+        return result.toString()
+    }
+
+    private fun escapeXml(str: String): String {
+        return str.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&apos;")
+    }
+}

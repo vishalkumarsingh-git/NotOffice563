@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['email', 'createdAt', 'updatedAt'])
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 256
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128))
+        && (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 1024))
+        && (!('themeMode' in data) || (data.themeMode is string && data.themeMode.size() <= 32))
+        && (!('viewMode' in data) || (data.viewMode is string && data.viewMode.size() <= 32))
+        && (!('sortOrder' in data) || (data.sortOrder is string && data.sortOrder.size() <= 32))
+        && data.createdAt is timestamp && data.createdAt <= request.time
+        && data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidDocumentNote(data) {
+      return data.keys().hasAll(['id', 'documentUri', 'noteText', 'createdAt', 'updatedAt'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+        && data.documentUri is string && data.documentUri.size() > 0 && data.documentUri.size() <= 2048
+        && (!('documentTitle' in data) || (data.documentTitle is string && data.documentTitle.size() <= 256))
+        && (!('pageNumber' in data) || (data.pageNumber is int && data.pageNumber >= 0))
+        && data.noteText is string && data.noteText.size() <= 10000
+        && data.createdAt is timestamp && data.createdAt <= request.time
+        && data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) && isValidUserProfile(request.resource.data)
+                    && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(userId);
+
+      match /notes/{noteId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidDocumentNote(request.resource.data);
+        allow update: if isOwner(userId) && isValidDocumentNote(request.resource.data)
+                      && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

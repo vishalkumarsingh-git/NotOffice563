@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and workspace preferences synced to cloud",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "themeMode": { "type": "string" },
+        "viewMode": { "type": "string" },
+        "sortOrder": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt", "updatedAt"]
+    },
+    "DocumentNote": {
+      "title": "DocumentNote",
+      "description": "User document annotations and reading notes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "documentUri": { "type": "string" },
+        "documentTitle": { "type": "string" },
+        "pageNumber": { "type": "integer" },
+        "noteText": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "documentUri", "noteText", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile and workspace preferences"
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": "DocumentNote",
+      "description": "User document notes and annotations"
+    }
+  }
+}
