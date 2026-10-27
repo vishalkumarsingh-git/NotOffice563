@@ -38,6 +38,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -274,23 +277,14 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    Button(
+                    LiquidGlassButton(
+                        text = "Clear",
+                        icon = Icons.Filled.DeleteSweep,
                         onClick = { showClearConfirmDialog = true },
-                        shape = SleekShapes.chip,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ExpenseRed.copy(alpha = 0.12f),
-                            contentColor = ExpenseRed
-                        ),
-                        border = BorderStroke(1.dp, ExpenseRed.copy(alpha = 0.3f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.DeleteSweep,
-                            contentDescription = null,
-                            modifier = Modifier.size(SleekSizes.iconSmall)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Clear")
-                    }
+                        accentColor = LiquidGlassTokens.CrimsonGlass,
+                        isPrimary = false,
+                        height = 38.dp
+                    )
                 }
             }
 
@@ -366,21 +360,22 @@ fun SettingsScreen(
                 )
             },
             confirmButton = {
-                Button(
+                LiquidGlassButton(
+                    text = "Clear",
                     onClick = {
                         showClearConfirmDialog = false
                         viewModel.clearRecentFiles()
                     },
-                    shape = SleekShapes.card,
-                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
-                ) {
-                    Text("Clear")
-                }
+                    accentColor = LiquidGlassTokens.CrimsonGlass,
+                    isPrimary = true
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showClearConfirmDialog = false }) {
-                    Text("Cancel")
-                }
+                LiquidGlassButton(
+                    text = "Cancel",
+                    onClick = { showClearConfirmDialog = false },
+                    isPrimary = false
+                )
             }
         )
     }

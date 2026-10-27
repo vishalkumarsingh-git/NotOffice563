@@ -43,6 +43,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFilterChip
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFloatingActionButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -114,16 +117,14 @@ fun FilesScreen(
             TopAppBar(
                 navigationIcon = {
                     if (onOpenDrawer != null) {
-                        IconButton(
+                        LiquidGlassIconButton(
                             onClick = onOpenDrawer,
-                            modifier = Modifier.testTag("open_drawer_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Open navigation drawer",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
+                            icon = Icons.Filled.Menu,
+                            contentDescription = "Open navigation drawer",
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                                .testTag("open_drawer_button")
+                        )
                     }
                 },
                 title = {
@@ -139,33 +140,23 @@ fun FilesScreen(
                 ),
                 actions = {
                     // View mode toggle
-                    IconButton(
+                    LiquidGlassIconButton(
                         onClick = { viewModel.toggleViewMode() },
-                        modifier = Modifier
-                            .size(SleekSizes.buttonSmall)
-                            .testTag("toggle_view_mode_button")
-                    ) {
-                        Icon(
-                            imageVector = if (uiState.viewMode == FileViewMode.LIST) Icons.Filled.GridView else Icons.AutoMirrored.Filled.ViewList,
-                            contentDescription = "Switch view mode",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                        icon = if (uiState.viewMode == FileViewMode.LIST) Icons.Filled.GridView else Icons.AutoMirrored.Filled.ViewList,
+                        contentDescription = "Switch view mode",
+                        modifier = Modifier.testTag("toggle_view_mode_button")
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
 
                     // Sort menu
                     Box {
-                        IconButton(
+                        LiquidGlassIconButton(
                             onClick = { showSortMenu = true },
-                            modifier = Modifier
-                                .size(SleekSizes.buttonSmall)
-                                .testTag("sort_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Sort,
-                                contentDescription = "Sort files",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
+                            icon = Icons.AutoMirrored.Filled.Sort,
+                            contentDescription = "Sort files",
+                            modifier = Modifier.testTag("sort_button")
+                        )
 
                         DropdownMenu(
                             expanded = showSortMenu,
@@ -192,7 +183,7 @@ fun FilesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            LiquidGlassFloatingActionButton(
                 onClick = {
                     documentPickerLauncher.launch(
                         arrayOf(
@@ -207,15 +198,11 @@ fun FilesScreen(
                         )
                     )
                 },
-                shape = SleekShapes.card,
-                containerColor = AccentBlue,
-                contentColor = Color.White,
+                contentDescription = "Open new file",
                 modifier = Modifier
-                    .padding(bottom = 76.dp)
+                    .padding(bottom = 80.dp)
                     .testTag("files_add_fab")
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Open new file")
-            }
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -238,9 +225,12 @@ fun FilesScreen(
                 },
                 trailingIcon = {
                     if (uiState.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Clear search")
-                        }
+                        LiquidGlassIconButton(
+                            onClick = { viewModel.onSearchQueryChanged("") },
+                            icon = Icons.Filled.Clear,
+                            contentDescription = "Clear search",
+                            size = 32.dp
+                        )
                     }
                 },
                 singleLine = true,
@@ -267,26 +257,10 @@ fun FilesScreen(
             ) {
                 DocumentCategory.entries.forEach { category ->
                     val isSelected = uiState.selectedCategory == category
-                    FilterChip(
+                    LiquidGlassFilterChip(
                         selected = isSelected,
                         onClick = { viewModel.selectCategory(category) },
-                        label = {
-                            Text(
-                                text = category.displayName,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            )
-                        },
-                        shape = SleekShapes.chip,
-                        border = BorderStroke(
-                            1.dp,
-                            if (isSelected) AccentBlue else MaterialTheme.colorScheme.outline
-                        ),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentBlueContainer,
-                            selectedLabelColor = OnAccentBlueContainer,
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
+                        label = category.displayName,
                         modifier = Modifier.testTag("category_chip_${category.name.lowercase()}")
                     )
                 }

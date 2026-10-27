@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -72,16 +73,12 @@ fun SearchScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
+                    LiquidGlassIconButton(
                         onClick = onNavigateBack,
-                        modifier = Modifier.size(SleekSizes.buttonSmall)
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -108,9 +105,12 @@ fun SearchScreen(
                 },
                 trailingIcon = {
                     if (uiState.query.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onQueryChange("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Clear")
-                        }
+                        LiquidGlassIconButton(
+                            onClick = { viewModel.onQueryChange("") },
+                            icon = Icons.Filled.Clear,
+                            contentDescription = "Clear",
+                            size = 32.dp
+                        )
                     }
                 },
                 singleLine = true,

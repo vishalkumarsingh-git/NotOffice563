@@ -24,6 +24,9 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -76,16 +79,14 @@ fun RecentScreen(
             TopAppBar(
                 navigationIcon = {
                     if (onOpenDrawer != null) {
-                        IconButton(
+                        LiquidGlassIconButton(
                             onClick = onOpenDrawer,
-                            modifier = Modifier.testTag("open_drawer_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Open navigation drawer",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
+                            icon = Icons.Filled.Menu,
+                            contentDescription = "Open navigation drawer",
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                                .testTag("open_drawer_button")
+                        )
                     }
                 },
                 title = {
@@ -101,18 +102,15 @@ fun RecentScreen(
                 ),
                 actions = {
                     if (uiState.files.isNotEmpty()) {
-                        IconButton(
+                        LiquidGlassIconButton(
                             onClick = { showClearConfirmDialog = true },
+                            icon = Icons.Filled.DeleteSweep,
+                            contentDescription = "Clear all recent files",
+                            activeColor = LiquidGlassTokens.CrimsonGlass,
                             modifier = Modifier
-                                .size(SleekSizes.buttonSmall)
+                                .padding(end = 12.dp)
                                 .testTag("clear_all_recent_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.DeleteSweep,
-                                contentDescription = "Clear all recent files",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
+                        )
                     }
                 }
             )
@@ -191,21 +189,22 @@ fun RecentScreen(
                 )
             },
             confirmButton = {
-                Button(
+                LiquidGlassButton(
+                    text = "Clear History",
                     onClick = {
                         showClearConfirmDialog = false
                         viewModel.clearAllRecent()
                     },
-                    shape = SleekShapes.card,
-                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
-                ) {
-                    Text("Clear History")
-                }
+                    accentColor = LiquidGlassTokens.CrimsonGlass,
+                    isPrimary = true
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showClearConfirmDialog = false }) {
-                    Text("Cancel")
-                }
+                LiquidGlassButton(
+                    text = "Cancel",
+                    onClick = { showClearConfirmDialog = false },
+                    isPrimary = false
+                )
             }
         )
     }

@@ -29,7 +29,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -696,4 +698,221 @@ fun LiquidGlassDialog(
         }
     }
 }
+
+/**
+ * iOS 26 Liquid Glass Circular Floating Action Button.
+ * Features a circular shape, layered translucency, specular rim highlights,
+ * inner specular reflection sheen, elevated drop shadow, and tactile spring physics.
+ */
+@Composable
+fun LiquidGlassFloatingActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.Filled.Add,
+    contentDescription: String? = null,
+    accentColor: Color = LiquidGlassTokens.AzureGlass,
+    accentColorLight: Color = LiquidGlassTokens.AzureGlassLight,
+    size: Dp = 56.dp
+) {
+    val haptic = LocalHapticFeedback.current
+
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) MotionTokens.ScaleButtonPressed else 1f,
+        animationSpec = if (isPressed) MotionTokens.SpecPressIn else MotionTokens.SpecPressOut,
+        label = "glassFabScale"
+    )
+
+    // Layered liquid glass gradient
+    val gradientBrush = Brush.verticalGradient(
+        colors = listOf(
+            accentColorLight,
+            accentColor,
+            Color(0xFF0056B3)
+        )
+    )
+
+    // Specular border: bright highlight at top, subtle at bottom
+    val specularBorder = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xE6FFFFFF),
+            Color(0x66FFFFFF),
+            Color(0x20FFFFFF)
+        )
+    )
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                shadowElevation = 12.dp.toPx()
+                shape = CircleShape
+                clip = false
+            }
+            .shadow(
+                elevation = 12.dp,
+                shape = CircleShape,
+                ambientColor = accentColor.copy(alpha = 0.45f),
+                spotColor = accentColor.copy(alpha = 0.65f)
+            )
+            .clip(CircleShape)
+            .background(gradientBrush)
+            .border(1.25.dp, specularBorder, CircleShape)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        HapticUtil.performLightImpact(haptic)
+                        onClick()
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        // Subtle top specular reflection half-arc
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(0.75f)
+                .height(size * 0.42f)
+                .clip(CircleShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0x55FFFFFF),
+                            Color(0x00FFFFFF)
+                        )
+                    )
+                )
+        )
+
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier.size(26.dp)
+        )
+    }
+}
+
+/**
+ * iOS 26 Liquid Glass Filter / Category Chip.
+ * Capsule shape with smooth glass materials, specular border, and spring press response.
+ */
+@Composable
+fun LiquidGlassFilterChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    activeColor: Color = LiquidGlassTokens.AzureGlass
+) {
+    val haptic = LocalHapticFeedback.current
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) MotionTokens.ScaleButtonPressed else 1f,
+        animationSpec = if (isPressed) MotionTokens.SpecPressIn else MotionTokens.SpecPressOut,
+        label = "glassChipScale"
+    )
+
+    val backgroundBrush = if (selected) {
+        Brush.verticalGradient(
+            colors = listOf(
+                activeColor,
+                activeColor.copy(alpha = 0.82f)
+            )
+        )
+    } else {
+        if (isDark) {
+            Brush.verticalGradient(
+                colors = listOf(
+                    Color(0x331C2438),
+                    Color(0x22131929)
+                )
+            )
+        } else {
+            Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xCCFFFFFF),
+                    Color(0xAAF0F4FA)
+                )
+            )
+        }
+    }
+
+    val borderStroke = if (selected) {
+        BorderStroke(1.dp, Color.White.copy(alpha = 0.55f))
+    } else {
+        BorderStroke(
+            1.dp,
+            if (isDark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.08f)
+        )
+    }
+
+    val textColor = if (selected) {
+        Color.White
+    } else {
+        if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+    }
+
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(LiquidGlassTokens.ShapeCapsule)
+            .background(backgroundBrush)
+            .border(borderStroke, LiquidGlassTokens.ShapeCapsule)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        HapticUtil.performSelection(haptic)
+                        onClick()
+                    }
+                )
+            }
+            .padding(horizontal = 14.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = textColor,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+            Text(
+                text = label,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    color = textColor,
+                    letterSpacing = 0.1.sp
+                )
+            )
+        }
+    }
+}
+
 

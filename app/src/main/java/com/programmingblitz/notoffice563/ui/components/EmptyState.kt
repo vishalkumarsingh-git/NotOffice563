@@ -94,22 +94,12 @@ fun EmptyState(
 
         if (actionButtonText != null && onActionClick != null) {
             Spacer(modifier = Modifier.height(24.dp))
-            Button(
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                text = actionButtonText,
                 onClick = onActionClick,
-                shape = SleekShapes.card,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentBlue,
-                    contentColor = Color.White
-                ),
-                modifier = Modifier
-                    .height(SleekSizes.buttonSmall)
-                    .testTag("empty_state_action_button")
-            ) {
-                Text(
-                    text = actionButtonText,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                isPrimary = true,
+                modifier = Modifier.testTag("empty_state_action_button")
+            )
         }
     }
 }
