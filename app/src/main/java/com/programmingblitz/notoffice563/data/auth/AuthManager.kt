@@ -50,8 +50,8 @@ class AuthManager(
      * BuildConfig, or environment secrets.
      */
     fun getWebClientId(): String? {
-        // 1. Dynamic lookup for default_web_client_id (generated only when google-services.json is configured).
-        // Avoid a direct R.string reference so debug builds still compile without Firebase configuration.
+        // The Google Services plugin generates this resource only when google-services.json is configured.
+        // Use dynamic lookup so builds without Firebase configuration still compile.
         for (pkg in listOf(context.packageName, "com.example", "com.programmingblitz.notoffice563")) {
             try {
                 val resId = context.resources.getIdentifier("default_web_client_id", "string", pkg)
@@ -65,21 +65,7 @@ class AuthManager(
             }
         }
 
-        // 2. BuildConfig fallback
-        for (pkg in listOf(context.packageName, "com.example", "com.programmingblitz.notoffice563")) {
-            try {
-                val resId = context.resources.getIdentifier("default_web_client_id", "string", pkg)
-                if (resId != 0) {
-                    val value = context.getString(resId)
-                    if (value.isNotBlank() && !value.contains("placeholder", ignoreCase = true)) {
-                        return value.trim()
-                    }
-                }
-            } catch (_: Throwable) {
-            }
-        }
-
-        // 3. BuildConfig fallback
+        // Optional BuildConfig fallback for environments that provide GOOGLE_WEB_CLIENT_ID.
         try {
             val buildConfigClass = Class.forName("com.programmingblitz.notoffice563.BuildConfig")
             val field = runCatching { buildConfigClass.getField("GOOGLE_WEB_CLIENT_ID") }.getOrNull()
