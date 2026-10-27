@@ -71,9 +71,16 @@ fun ViewerScreen(
     var showOverflowMenu by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
     LaunchedEffect(Unit) {
         viewModel.loadDocument(context)
         viewModel.messageEvents.collect { message ->
+            if (message.contains("Saved", ignoreCase = true)) {
+                com.programmingblitz.notoffice563.util.HapticUtil.performSuccess(haptic)
+            } else if (message.contains("failed", ignoreCase = true) || message.contains("error", ignoreCase = true)) {
+                com.programmingblitz.notoffice563.util.HapticUtil.performError(haptic)
+            }
             snackbarHostState.showSnackbar(message)
         }
     }

@@ -104,8 +104,8 @@ fun LiquidGlassCard(
     val haptic = LocalHapticFeedback.current
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.985f else 1f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        targetValue = if (isPressed) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.ScaleCardPressed else 1f,
+        animationSpec = if (isPressed) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecPressIn else com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecPressOut,
         label = "glassCardScale"
     )
 
@@ -159,8 +159,8 @@ fun LiquidGlassButton(
 
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (isPressed && enabled && !isLoading) 0.96f else 1f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        targetValue = if (isPressed && enabled && !isLoading) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.ScaleButtonPressed else 1f,
+        animationSpec = if (isPressed) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecPressIn else com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecPressOut,
         label = "glassBtnScale"
     )
 
@@ -224,7 +224,7 @@ fun LiquidGlassButton(
                         isPressed = false
                     },
                     onTap = {
-                        HapticUtil.performAction(haptic)
+                        HapticUtil.performLightImpact(haptic)
                         onClick()
                     }
                 )
@@ -558,8 +558,8 @@ fun LiquidGlassIconButton(
 
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (isPressed && enabled) 0.92f else 1f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        targetValue = if (isPressed && enabled) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.ScaleIconButtonPressed else 1f,
+        animationSpec = if (isPressed) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecPressIn else com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecPressOut,
         label = "glassIconBtnScale"
     )
 
@@ -605,7 +605,7 @@ fun LiquidGlassIconButton(
                         isPressed = false
                     },
                     onTap = {
-                        HapticUtil.performSelection(haptic)
+                        HapticUtil.performLightImpact(haptic)
                         onClick()
                     }
                 )
@@ -622,7 +622,7 @@ fun LiquidGlassIconButton(
 }
 
 /**
- * Custom Liquid Glass Dialog replacement.
+ * Custom Liquid Glass Dialog replacement with smooth entrance animation.
  */
 @Composable
 fun LiquidGlassDialog(
@@ -635,8 +635,30 @@ fun LiquidGlassDialog(
     content: @Composable ColumnScope.() -> Unit
 ) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismissRequest) {
+        var isVisible by remember { mutableStateOf(false) }
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            isVisible = true
+        }
+
+        val animScale by animateFloatAsState(
+            targetValue = if (isVisible) 1f else 0.94f,
+            animationSpec = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.springInteractive(),
+            label = "dialogScale"
+        )
+        val animAlpha by animateFloatAsState(
+            targetValue = if (isVisible) 1f else 0f,
+            animationSpec = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.SpecFadeIn,
+            label = "dialogAlpha"
+        )
+
         LiquidGlassSurface(
-            modifier = modifier.fillMaxWidth(0.92f),
+            modifier = modifier
+                .fillMaxWidth(0.92f)
+                .graphicsLayer {
+                    scaleX = animScale
+                    scaleY = animScale
+                    alpha = animAlpha
+                },
             shape = LiquidGlassTokens.ShapeLarge,
             isDark = isDark,
             elevation = 16.dp,

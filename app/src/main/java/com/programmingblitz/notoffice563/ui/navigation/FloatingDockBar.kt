@@ -121,13 +121,13 @@ private fun AnimatedDockTile(
 
     val animatedPaddingHorizontal by animateDpAsState(
         targetValue = if (isSelected) 14.dp else 10.dp,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium, dampingRatio = Spring.DampingRatioNoBouncy),
+        animationSpec = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.springSmooth(),
         label = "tilePadding"
     )
 
     val animatedScale by animateFloatAsState(
-        targetValue = if (isSelected) 1.02f else 1.0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium, dampingRatio = Spring.DampingRatioLowBouncy),
+        targetValue = if (isSelected) com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.ScaleDockItemActive else com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.ScaleResting,
+        animationSpec = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.springInteractive(),
         label = "tileScale"
     )
 
@@ -136,7 +136,7 @@ private fun AnimatedDockTile(
 
     val containerBg by animateColorAsState(
         targetValue = if (isSelected) activePillBg else Color.Transparent,
-        animationSpec = tween(220, easing = FastOutSlowInEasing),
+        animationSpec = tween(com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationDockMovement, easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseStandard),
         label = "containerBgAnim"
     )
 

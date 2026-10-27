@@ -290,7 +290,63 @@ fun MainAppContent(
             NavHost(
                 navController = navController,
                 startDestination = Screen.Home.route,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    androidx.compose.animation.fadeIn(
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseStandard
+                        )
+                    ) + androidx.compose.animation.slideInHorizontally(
+                        initialOffsetX = { fullWidth -> (fullWidth * 0.06f).toInt() },
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseDecel
+                        )
+                    )
+                },
+                exitTransition = {
+                    androidx.compose.animation.fadeOut(
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation - 40,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseStandard
+                        )
+                    ) + androidx.compose.animation.slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> -(fullWidth * 0.04f).toInt() },
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation - 40,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseAccel
+                        )
+                    )
+                },
+                popEnterTransition = {
+                    androidx.compose.animation.fadeIn(
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseStandard
+                        )
+                    ) + androidx.compose.animation.slideInHorizontally(
+                        initialOffsetX = { fullWidth -> -(fullWidth * 0.04f).toInt() },
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseDecel
+                        )
+                    )
+                },
+                popExitTransition = {
+                    androidx.compose.animation.fadeOut(
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation - 40,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseStandard
+                        )
+                    ) + androidx.compose.animation.slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> (fullWidth * 0.06f).toInt() },
+                        animationSpec = androidx.compose.animation.core.tween(
+                            com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.DurationNavigation - 40,
+                            easing = com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens.EaseAccel
+                        )
+                    )
+                }
             ) {
                 // 1. Home Dashboard
                 composable(Screen.Home.route) {

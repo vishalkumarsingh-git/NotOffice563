@@ -71,7 +71,11 @@ import com.programmingblitz.notoffice563.ui.theme.WordDocBlue
 import com.programmingblitz.notoffice563.ui.theme.WordDocBlueLight
 import com.programmingblitz.notoffice563.ui.theme.WordDocContainer
 import com.programmingblitz.notoffice563.ui.theme.WordDocContainerDark
+import com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens
+import com.programmingblitz.notoffice563.ui.theme.motion.liquidPressable
 import com.programmingblitz.notoffice563.util.FileUtils
+import com.programmingblitz.notoffice563.util.HapticType
+import com.programmingblitz.notoffice563.util.HapticUtil
 
 data class DocumentTypeAppearance(
     val icon: ImageVector,
@@ -313,7 +317,11 @@ fun DocumentGridItem(
     Card(
         modifier = modifier
             .testTag("document_grid_item_${file.uri.hashCode()}")
-            .clickable(onClick = onClick),
+            .liquidPressable(
+                pressedScale = MotionTokens.ScaleCardPressed,
+                hapticType = HapticType.SELECTION,
+                onClick = onClick
+            ),
         shape = SleekShapes.card,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

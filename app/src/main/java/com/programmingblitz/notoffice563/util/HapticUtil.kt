@@ -16,16 +16,45 @@ object HapticUtil {
         try {
             haptic?.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         } catch (_: Exception) {
-            // Gracefully ignore on devices without vibration hardware or disabled system haptics
         }
     }
 
     /**
-     * Crisp pulse for primary actions (Google Sign In, Sign Out, Open Document, Theme Switch).
+     * Crisp pulse for primary actions (Save, Open Document, Theme Switch).
      */
     fun performAction(haptic: HapticFeedback?) {
         try {
             haptic?.performHapticFeedback(HapticFeedbackType.LongPress)
+        } catch (_: Exception) {
+        }
+    }
+
+    /**
+     * Positive feedback when an operation completes successfully.
+     */
+    fun performSuccess(haptic: HapticFeedback?) {
+        try {
+            haptic?.performHapticFeedback(HapticFeedbackType.LongPress)
+        } catch (_: Exception) {
+        }
+    }
+
+    /**
+     * Distinct feedback when a validation error or save error occurs.
+     */
+    fun performError(haptic: HapticFeedback?) {
+        try {
+            haptic?.performHapticFeedback(HapticFeedbackType.LongPress)
+        } catch (_: Exception) {
+        }
+    }
+
+    /**
+     * Light impact for small toggles (Bold, Italic, Underline).
+     */
+    fun performLightImpact(haptic: HapticFeedback?) {
+        try {
+            haptic?.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         } catch (_: Exception) {
         }
     }
