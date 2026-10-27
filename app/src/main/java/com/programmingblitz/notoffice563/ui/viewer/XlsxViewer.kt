@@ -61,6 +61,8 @@ fun XlsxViewer(
     state: ViewerContentState.XlsxContent,
     onSelectSheet: (Int) -> Unit,
     onSelectCell: (String, String) -> Unit,
+    onCellValChange: ((String) -> Unit)? = null,
+    onSaveOriginal: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -106,6 +108,16 @@ fun XlsxViewer(
                                 fontSize = 12.sp,
                                 color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
                             )
+                        )
+                    }
+
+                    if (onSaveOriginal != null) {
+                        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                            text = "Save",
+                            onClick = onSaveOriginal,
+                            accentColor = ExcelSheetGreen,
+                            height = 32.dp,
+                            modifier = Modifier.testTag("xlsx_save_button")
                         )
                     }
                 }
@@ -174,6 +186,7 @@ fun XlsxViewer(
                     onValueChange = {
                         formulaInput = it
                         onSelectCell(state.selectedCellRef.ifEmpty { "A1" }, it)
+                        onCellValChange?.invoke(it)
                     },
                     singleLine = true,
                     textStyle = TextStyle(
@@ -185,6 +198,7 @@ fun XlsxViewer(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         onSelectCell(state.selectedCellRef.ifEmpty { "A1" }, formulaInput)
+                        onCellValChange?.invoke(formulaInput)
                     }),
                     modifier = Modifier.weight(1f)
                 )

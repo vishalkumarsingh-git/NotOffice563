@@ -16,6 +16,9 @@ import com.programmingblitz.notoffice563.document.parser.PptxParser
 import com.programmingblitz.notoffice563.document.parser.XlsxParser
 import com.programmingblitz.notoffice563.document.pdf.PdfManager
 import com.programmingblitz.notoffice563.document.saf.SafHelper
+import com.programmingblitz.notoffice563.domain.model.DocxAlignment
+import com.programmingblitz.notoffice563.domain.model.DocxParagraph
+import com.programmingblitz.notoffice563.domain.model.DocxRun
 import com.programmingblitz.notoffice563.domain.model.DocumentType
 import com.programmingblitz.notoffice563.domain.model.ParsedDocxDocument
 import com.programmingblitz.notoffice563.domain.model.ParsedPresentation
@@ -34,6 +37,12 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
+enum class SaveStatus {
+    SAVED,
+    UNSAVED_CHANGES,
+    SAVING
+}
+
 sealed class ViewerContentState {
     object Loading : ViewerContentState()
 
@@ -50,7 +59,10 @@ sealed class ViewerContentState {
         val isEditing: Boolean = false,
         val editedTitle: String = "",
         val editedContent: String = "",
-        val documentNote: String = ""
+        val editedParagraphs: List<DocxParagraph> = emptyList(),
+        val documentNote: String = "",
+        val saveStatus: SaveStatus = SaveStatus.SAVED,
+        val hasUnsavedChanges: Boolean = false
     ) : ViewerContentState()
 
     data class XlsxContent(
@@ -179,7 +191,10 @@ class ViewerViewModel(
                     _contentState.value = ViewerContentState.DocxContent(
                         parsedDoc = parsed,
                         editedTitle = parsed.title,
-                        editedContent = parsed.rawText
+                        editedContent = parsed.rawText,
+                        editedParagraphs = parsed.paragraphs,
+                        saveStatus = SaveStatus.SAVED,
+                        hasUnsavedChanges = false
                     )
                     loadNoteForTarget("doc:global")
                 }
@@ -282,28 +297,119 @@ class ViewerViewModel(
 
     fun updateDocxEditTitle(title: String) {
         val current = _contentState.value as? ViewerContentState.DocxContent ?: return
-        _contentState.value = current.copy(editedTitle = title)
+        _contentState.value = current.copy(
+            editedTitle = title,
+            hasUnsavedChanges = true,
+            saveStatus = SaveStatus.UNSAVED_CHANGES
+        )
     }
 
     fun updateDocxEditContent(content: String) {
         val current = _contentState.value as? ViewerContentState.DocxContent ?: return
-        _contentState.value = current.copy(editedContent = content)
+        _contentState.value = current.copy(
+            editedContent = content,
+            hasUnsavedChanges = true,
+            saveStatus = SaveStatus.UNSAVED_CHANGES
+        )
+    }
+
+    fun updateDocxParagraphs(paragraphs: List<com.programmingblitz.notoffice563.domain.model.DocxParagraph>, rawText: String) {
+        val current = _contentState.value as? ViewerContentState.DocxContent ?: return
+        _contentState.value = current.copy(
+            editedParagraphs = paragraphs,
+            editedContent = rawText,
+            hasUnsavedChanges = true,
+            saveStatus = SaveStatus.UNSAVED_CHANGES
+        )
+    }
+
+    fun saveOriginalDocx(context: Context) {
+        val current = _contentState.value as? ViewerContentState.DocxContent ?: return
+        _contentState.value = current.copy(saveStatus = SaveStatus.SAVING)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val uri = Uri.parse(uriString)
+                val paragraphs = if (current.editedParagraphs.isNotEmpty()) {
+                    current.editedParagraphs
+                } else {
+                    current.editedContent.split("\n\n", "\n")
+                        .filter { it.isNotBlank() }
+                        .map { com.programmingblitz.notoffice563.domain.model.DocxParagraph(text = it) }
+                }
+
+                val bytes = DocxParser.createRichDocx(current.editedTitle, paragraphs)
+
+                val outputStream = context.contentResolver.openOutputStream(uri, "rwt")
+                    ?: context.contentResolver.openOutputStream(uri, "wt")
+                    ?: throw IllegalStateException("Cannot open output stream for original file")
+
+                outputStream.use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                }
+
+                val reParsed = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    DocxParser.parse(stream, current.editedTitle)
+                } ?: current.parsedDoc
+
+                val entity = repository.registerOpenedDocument(context, uri)
+                _fileMetadata.value = entity
+
+                _contentState.value = current.copy(
+                    parsedDoc = reParsed,
+                    editedTitle = reParsed.title,
+                    editedContent = reParsed.rawText,
+                    editedParagraphs = reParsed.paragraphs,
+                    saveStatus = SaveStatus.SAVED,
+                    hasUnsavedChanges = false
+                )
+
+                _messageEvents.emit("Saved changes to original document")
+            } catch (e: Exception) {
+                _contentState.value = current.copy(saveStatus = SaveStatus.UNSAVED_CHANGES)
+                _messageEvents.emit("Save failed: ${e.localizedMessage}")
+            }
+        }
     }
 
     fun saveEditedDocxCopy(context: Context, onSaved: (Uri) -> Unit) {
         val current = _contentState.value as? ViewerContentState.DocxContent ?: return
+        _contentState.value = current.copy(saveStatus = SaveStatus.SAVING)
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val bytes = DocxParser.createBasicDocx(current.editedTitle, current.editedContent)
-                val exportFile = File(context.cacheDir, "edited_${System.currentTimeMillis()}_${current.editedTitle.replace(" ", "_")}.docx")
+                val paragraphs = if (current.editedParagraphs.isNotEmpty()) {
+                    current.editedParagraphs
+                } else {
+                    current.editedContent.split("\n\n", "\n")
+                        .filter { it.isNotBlank() }
+                        .map { com.programmingblitz.notoffice563.domain.model.DocxParagraph(text = it) }
+                }
+
+                val bytes = DocxParser.createRichDocx(current.editedTitle, paragraphs)
+
+                val docDir = context.getExternalFilesDir(null) ?: context.filesDir
+                val sanitizedTitle = current.editedTitle.trim().replace("[^a-zA-Z0-9_ -]".toRegex(), "_").ifBlank { "Copy" }
+                val exportFile = File(docDir, "${sanitizedTitle}_${System.currentTimeMillis()}.docx")
+
                 FileOutputStream(exportFile).use { it.write(bytes) }
+
                 val exportUri = Uri.fromFile(exportFile)
-                _messageEvents.emit("Saved edited document copy: ${exportFile.name}")
+                val newEntity = repository.registerOpenedDocument(context, exportUri)
+
+                _contentState.value = current.copy(
+                    saveStatus = SaveStatus.SAVED,
+                    hasUnsavedChanges = false
+                )
+
+                _messageEvents.emit("Saved copy to ${exportFile.name}")
                 withContext(Dispatchers.Main) {
                     onSaved(exportUri)
                 }
             } catch (e: Exception) {
-                _messageEvents.emit("Save failed: ${e.localizedMessage}")
+                _contentState.value = current.copy(saveStatus = SaveStatus.UNSAVED_CHANGES)
+                _messageEvents.emit("Save copy failed: ${e.localizedMessage}")
             }
         }
     }
@@ -328,6 +434,75 @@ class ViewerViewModel(
         )
     }
 
+    fun updateSelectedCellValue(newValue: String) {
+        val current = _contentState.value as? ViewerContentState.XlsxContent ?: return
+        val sheetIndex = current.currentSheetIndex
+        val sheets = current.parsedSpreadsheet.sheets.toMutableList()
+        val sheet = sheets.getOrNull(sheetIndex) ?: return
+
+        val ref = current.selectedCellRef
+        if (ref.isEmpty()) return
+
+        val colLetters = ref.filter { it.isLetter() }
+        val rowDigits = ref.filter { it.isDigit() }
+        val colIndex = columnLetterToIndex(colLetters)
+        val rowIndex = (rowDigits.toIntOrNull() ?: 1) - 1
+
+        if (rowIndex < 0 || colIndex < 0) return
+
+        val rows = sheet.rows.map { it.toMutableList() }.toMutableList()
+        while (rows.size <= rowIndex) {
+            val emptyRow = MutableList(sheet.maxColumns) { "" }
+            rows.add(emptyRow)
+        }
+        val targetRow = rows[rowIndex]
+        while (targetRow.size <= colIndex) {
+            targetRow.add("")
+        }
+        targetRow[colIndex] = newValue
+
+        val updatedSheet = sheet.copy(
+            rows = rows,
+            maxColumns = maxOf(sheet.maxColumns, colIndex + 1),
+            maxRows = maxOf(sheet.maxRows, rows.size)
+        )
+        sheets[sheetIndex] = updatedSheet
+
+        _contentState.value = current.copy(
+            parsedSpreadsheet = current.parsedSpreadsheet.copy(sheets = sheets),
+            selectedCellValue = newValue
+        )
+    }
+
+    fun saveOriginalXlsx(context: Context) {
+        val current = _contentState.value as? ViewerContentState.XlsxContent ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val uri = Uri.parse(uriString)
+                val bytes = com.programmingblitz.notoffice563.document.generator.XlsxGenerator.buildXlsxFromSpreadsheet(current.parsedSpreadsheet)
+                val outputStream = context.contentResolver.openOutputStream(uri, "rwt")
+                    ?: context.contentResolver.openOutputStream(uri, "wt")
+                    ?: throw IllegalStateException("Cannot open output stream for XLSX")
+
+                outputStream.use { it.write(bytes) }
+                _messageEvents.emit("Saved changes to original spreadsheet")
+            } catch (e: Exception) {
+                _messageEvents.emit("Save failed: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    private fun columnLetterToIndex(colLetters: String): Int {
+        var result = 0
+        for (char in colLetters.uppercase()) {
+            if (char in 'A'..'Z') {
+                result = result * 26 + (char - 'A' + 1)
+            }
+        }
+        return (result - 1).coerceAtLeast(0)
+    }
+
+
     // PPTX Actions
     fun setSlideIndex(index: Int) {
         val current = _contentState.value as? ViewerContentState.PptxContent ?: return
@@ -335,6 +510,65 @@ class ViewerViewModel(
             _contentState.value = current.copy(currentSlideIndex = index)
             viewModelScope.launch {
                 repository.updateLastPosition(uriString, "slide:$index")
+            }
+        }
+    }
+
+    fun updateSlideTitle(slideIndex: Int, newTitle: String) {
+        val current = _contentState.value as? ViewerContentState.PptxContent ?: return
+        val slides = current.parsedPresentation.slides.toMutableList()
+        val slide = slides.getOrNull(slideIndex) ?: return
+        slides[slideIndex] = slide.copy(title = newTitle)
+        _contentState.value = current.copy(
+            parsedPresentation = current.parsedPresentation.copy(slides = slides)
+        )
+    }
+
+    fun addSlide() {
+        val current = _contentState.value as? ViewerContentState.PptxContent ?: return
+        val slides = current.parsedPresentation.slides.toMutableList()
+        val newSlideNum = slides.size + 1
+        val newSlide = com.programmingblitz.notoffice563.domain.model.PresentationSlide(
+            slideNumber = newSlideNum,
+            title = "New Slide $newSlideNum",
+            bodyBullets = emptyList()
+        )
+        slides.add(newSlide)
+        _contentState.value = current.copy(
+            parsedPresentation = current.parsedPresentation.copy(slides = slides),
+            currentSlideIndex = slides.size - 1
+        )
+    }
+
+    fun deleteSlide(slideIndex: Int) {
+        val current = _contentState.value as? ViewerContentState.PptxContent ?: return
+        val slides = current.parsedPresentation.slides.toMutableList()
+        if (slides.size <= 1) return
+        if (slideIndex in slides.indices) {
+            slides.removeAt(slideIndex)
+            val renumbered = slides.mapIndexed { idx, s -> s.copy(slideNumber = idx + 1) }
+            val newIndex = (current.currentSlideIndex).coerceAtMost(renumbered.size - 1)
+            _contentState.value = current.copy(
+                parsedPresentation = current.parsedPresentation.copy(slides = renumbered),
+                currentSlideIndex = newIndex
+            )
+        }
+    }
+
+    fun saveOriginalPptx(context: Context) {
+        val current = _contentState.value as? ViewerContentState.PptxContent ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val uri = Uri.parse(uriString)
+                val bytes = com.programmingblitz.notoffice563.document.generator.PptxGenerator.buildPptxFromPresentation(current.parsedPresentation)
+                val outputStream = context.contentResolver.openOutputStream(uri, "rwt")
+                    ?: context.contentResolver.openOutputStream(uri, "wt")
+                    ?: throw IllegalStateException("Cannot open output stream for PPTX")
+
+                outputStream.use { it.write(bytes) }
+                _messageEvents.emit("Saved changes to original presentation")
+            } catch (e: Exception) {
+                _messageEvents.emit("Save failed: ${e.localizedMessage}")
             }
         }
     }

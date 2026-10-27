@@ -3,7 +3,9 @@ package com.programmingblitz.notoffice563.document.parser
 import android.content.Context
 import android.net.Uri
 import android.util.Xml
+import com.programmingblitz.notoffice563.domain.model.DocxAlignment
 import com.programmingblitz.notoffice563.domain.model.DocxParagraph
+import com.programmingblitz.notoffice563.domain.model.DocxRun
 import com.programmingblitz.notoffice563.domain.model.ParsedDocxDocument
 import org.xmlpull.v1.XmlPullParser
 import java.io.ByteArrayInputStream
@@ -19,7 +21,7 @@ object DocxParser {
 
     /**
      * Parses a .docx document from a stream.
-     * Extracts document properties, clean paragraphs, headings, bullet points, and basic styling.
+     * Extracts document properties, clean paragraphs, headings, bullet points, runs, and rich styling.
      */
     fun parse(inputStream: InputStream, defaultTitle: String): ParsedDocxDocument {
         var documentXmlBytes: ByteArray? = null
@@ -82,12 +84,20 @@ object DocxParser {
         parser.setInput(ByteArrayInputStream(documentXmlBytes), "UTF-8")
 
         var inParagraph = false
-        var currentPText = StringBuilder()
+        var currentPRuns = mutableListOf<DocxRun>()
         var isHeading = false
         var headingLevel = 0
         var isBullet = false
-        var isBold = false
-        var isItalic = false
+        var isNumbered = false
+        var paragraphAlignment = com.programmingblitz.notoffice563.domain.model.DocxAlignment.LEFT
+
+        // Run level state
+        var inRun = false
+        var runBold = false
+        var runItalic = false
+        var runUnderline = false
+        var runFontSize: Float? = null
+        var currentRunText = StringBuilder()
 
         var eventType = parser.eventType
         while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -96,63 +106,123 @@ object DocxParser {
                     when (parser.name) {
                         "p" -> {
                             inParagraph = true
-                            currentPText = StringBuilder()
+                            currentPRuns = mutableListOf()
                             isHeading = false
                             headingLevel = 0
                             isBullet = false
-                            isBold = false
-                            isItalic = false
+                            isNumbered = false
+                            paragraphAlignment = com.programmingblitz.notoffice563.domain.model.DocxAlignment.LEFT
                         }
                         "pStyle" -> {
                             val styleVal = parser.getAttributeValue(null, "val") ?: ""
                             if (styleVal.startsWith("Heading", ignoreCase = true) || styleVal.startsWith("Title", ignoreCase = true)) {
                                 isHeading = true
                                 headingLevel = styleVal.filter { it.isDigit() }.toIntOrNull() ?: 1
+                            } else if (styleVal.contains("ListBullet", ignoreCase = true)) {
+                                isBullet = true
+                            } else if (styleVal.contains("ListNumber", ignoreCase = true)) {
+                                isNumbered = true
+                            }
+                        }
+                        "jc" -> {
+                            val jcVal = parser.getAttributeValue(null, "val") ?: ""
+                            paragraphAlignment = when (jcVal.lowercase()) {
+                                "center" -> com.programmingblitz.notoffice563.domain.model.DocxAlignment.CENTER
+                                "right" -> com.programmingblitz.notoffice563.domain.model.DocxAlignment.RIGHT
+                                "both", "justify" -> com.programmingblitz.notoffice563.domain.model.DocxAlignment.JUSTIFY
+                                else -> com.programmingblitz.notoffice563.domain.model.DocxAlignment.LEFT
                             }
                         }
                         "numPr" -> {
                             isBullet = true
                         }
+                        "r" -> {
+                            inRun = true
+                            runBold = false
+                            runItalic = false
+                            runUnderline = false
+                            runFontSize = null
+                            currentRunText = StringBuilder()
+                        }
                         "b" -> {
                             val valAttr = parser.getAttributeValue(null, "val")
-                            isBold = valAttr == null || valAttr == "1" || valAttr.equals("true", ignoreCase = true)
+                            val active = valAttr == null || valAttr == "1" || valAttr.equals("true", ignoreCase = true)
+                            if (inRun) runBold = active
                         }
                         "i" -> {
                             val valAttr = parser.getAttributeValue(null, "val")
-                            isItalic = valAttr == null || valAttr == "1" || valAttr.equals("true", ignoreCase = true)
+                            val active = valAttr == null || valAttr == "1" || valAttr.equals("true", ignoreCase = true)
+                            if (inRun) runItalic = active
+                        }
+                        "u" -> {
+                            val valAttr = parser.getAttributeValue(null, "val")
+                            val active = valAttr != "none"
+                            if (inRun) runUnderline = active
+                        }
+                        "sz" -> {
+                            val valAttr = parser.getAttributeValue(null, "val")
+                            val halfPoints = valAttr?.toFloatOrNull()
+                            if (halfPoints != null && inRun) {
+                                runFontSize = halfPoints / 2f
+                            }
                         }
                         "t" -> {
                             val text = parser.nextText()
-                            currentPText.append(text)
+                            if (inRun) {
+                                currentRunText.append(text)
+                            } else {
+                                currentPRuns.add(DocxRun(text = text))
+                            }
                             fullTextBuilder.append(text)
                         }
                         "tab" -> {
-                            currentPText.append("    ")
-                            fullTextBuilder.append("    ")
+                            if (inRun) currentRunText.append("    ") else fullTextBuilder.append("    ")
                         }
                         "br", "cr" -> {
-                            currentPText.append("\n")
-                            fullTextBuilder.append("\n")
+                            if (inRun) currentRunText.append("\n") else fullTextBuilder.append("\n")
                         }
                     }
                 }
                 XmlPullParser.END_TAG -> {
-                    if (parser.name == "p") {
-                        val text = currentPText.toString().trim()
-                        if (text.isNotEmpty()) {
-                            paragraphs.add(
-                                DocxParagraph(
-                                    text = text,
-                                    isHeading = isHeading,
-                                    headingLevel = headingLevel,
-                                    isBullet = isBullet,
-                                    isBold = isBold,
-                                    isItalic = isItalic
-                                )
-                            )
+                    when (parser.name) {
+                        "r" -> {
+                            if (inRun) {
+                                val rText = currentRunText.toString()
+                                if (rText.isNotEmpty()) {
+                                    currentPRuns.add(
+                                        DocxRun(
+                                            text = rText,
+                                            isBold = runBold,
+                                            isItalic = runItalic,
+                                            isUnderline = runUnderline,
+                                            fontSizeSp = runFontSize
+                                        )
+                                    )
+                                }
+                                inRun = false
+                            }
                         }
-                        fullTextBuilder.append("\n\n")
-                        inParagraph = false
+                        "p" -> {
+                            val pText = currentPRuns.joinToString("") { it.text }.trim()
+                            if (pText.isNotEmpty() || currentPRuns.isNotEmpty()) {
+                                paragraphs.add(
+                                    DocxParagraph(
+                                        text = pText,
+                                        runs = currentPRuns,
+                                        isHeading = isHeading,
+                                        headingLevel = headingLevel,
+                                        isBullet = isBullet,
+                                        isNumbered = isNumbered,
+                                        isBold = currentPRuns.any { it.isBold },
+                                        isItalic = currentPRuns.any { it.isItalic },
+                                        isUnderline = currentPRuns.any { it.isUnderline },
+                                        alignment = paragraphAlignment
+                                    )
+                                )
+                            }
+                            fullTextBuilder.append("\n\n")
+                            inParagraph = false
+                        }
                     }
                 }
             }
@@ -173,10 +243,9 @@ object DocxParser {
     }
 
     /**
-     * Generates a basic valid .docx archive containing the modified paragraphs and title.
-     * Allows users to edit text and save a newly compiled .docx file cleanly.
+     * Generates a valid OOXML .docx archive containing formatted paragraphs, runs, alignments, and titles.
      */
-    fun createBasicDocx(title: String, plainContent: String): ByteArray {
+    fun createRichDocx(title: String, paragraphs: List<DocxParagraph>): ByteArray {
         val bos = ByteArrayOutputStream()
         ZipOutputStream(bos).use { zos ->
             // 1. [Content_Types].xml
@@ -207,7 +276,7 @@ object DocxParser {
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
     xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>${escapeXml(title)}</dc:title>
-    <dc:creator>NotOffice563 User</dc:creator>
+    <dc:creator>NotOffice563</dc:creator>
 </cp:coreProperties>"""
             zos.write(coreProps.toByteArray(StandardCharsets.UTF_8))
             zos.closeEntry()
@@ -219,33 +288,69 @@ object DocxParser {
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
     <w:body>
 """)
-            // Title paragraph
+            // Title paragraph if title present
             if (title.isNotBlank()) {
                 docBuilder.append("""
         <w:p>
             <w:pPr>
                 <w:pStyle w:val="Heading1"/>
+                <w:jc w:val="left"/>
             </w:pPr>
             <w:r>
                 <w:rPr><w:b/><w:sz w:val="36"/></w:rPr>
-                <w:t>${escapeXml(title)}</w:t>
+                <w:t xml:space="preserve">${escapeXml(title)}</w:t>
             </w:r>
         </w:p>
 """)
             }
 
-            // Body paragraphs
-            val paragraphs = plainContent.split("\n\n", "\n")
+            // Paragraphs
             for (p in paragraphs) {
-                if (p.isNotBlank()) {
-                    docBuilder.append("""
-        <w:p>
-            <w:r>
-                <w:t>${escapeXml(p)}</w:t>
-            </w:r>
-        </w:p>
-""")
+                val jcVal = when (p.alignment) {
+                    com.programmingblitz.notoffice563.domain.model.DocxAlignment.CENTER -> "center"
+                    com.programmingblitz.notoffice563.domain.model.DocxAlignment.RIGHT -> "right"
+                    com.programmingblitz.notoffice563.domain.model.DocxAlignment.JUSTIFY -> "both"
+                    else -> "left"
                 }
+
+                docBuilder.append("        <w:p>\n")
+                docBuilder.append("            <w:pPr>\n")
+                if (p.isHeading) {
+                    docBuilder.append("                <w:pStyle w:val=\"Heading1\"/>\n")
+                }
+                docBuilder.append("                <w:jc w:val=\"$jcVal\"/>\n")
+                if (p.isBullet) {
+                    docBuilder.append("                <w:ind w:left=\"360\"/>\n")
+                }
+                docBuilder.append("            </w:pPr>\n")
+
+                if (p.runs.isNotEmpty()) {
+                    for (run in p.runs) {
+                        docBuilder.append("            <w:r>\n")
+                        docBuilder.append("                <w:rPr>\n")
+                        if (run.isBold) docBuilder.append("                    <w:b/>\n")
+                        if (run.isItalic) docBuilder.append("                    <w:i/>\n")
+                        if (run.isUnderline) docBuilder.append("                    <w:u w:val=\"single\"/>\n")
+                        if (run.fontSizeSp != null) {
+                            val szHalf = (run.fontSizeSp * 2f).toInt()
+                            docBuilder.append("                    <w:sz w:val=\"$szHalf\"/>\n")
+                        }
+                        docBuilder.append("                </w:rPr>\n")
+                        docBuilder.append("                <w:t xml:space=\"preserve\">${escapeXml(run.text)}</w:t>\n")
+                        docBuilder.append("            </w:r>\n")
+                    }
+                } else if (p.fullText.isNotEmpty()) {
+                    docBuilder.append("            <w:r>\n")
+                    docBuilder.append("                <w:rPr>\n")
+                    if (p.isBold) docBuilder.append("                    <w:b/>\n")
+                    if (p.isItalic) docBuilder.append("                    <w:i/>\n")
+                    if (p.isUnderline) docBuilder.append("                    <w:u w:val=\"single\"/>\n")
+                    docBuilder.append("                </w:rPr>\n")
+                    docBuilder.append("                <w:t xml:space=\"preserve\">${escapeXml(p.fullText)}</w:t>\n")
+                    docBuilder.append("            </w:r>\n")
+                }
+
+                docBuilder.append("        </w:p>\n")
             }
 
             docBuilder.append("""
@@ -256,6 +361,24 @@ object DocxParser {
             zos.closeEntry()
         }
         return bos.toByteArray()
+    }
+
+    /**
+     * Generates a basic valid .docx archive containing the modified paragraphs and title.
+     */
+    fun createBasicDocx(title: String, plainContent: String): ByteArray {
+        val paragraphs = plainContent.split("\n\n", "\n")
+            .filter { it.isNotBlank() }
+            .map { text ->
+                val isBullet = text.startsWith("• ") || text.startsWith("- ")
+                val cleanText = if (isBullet) text.substring(2) else text
+                DocxParagraph(
+                    text = cleanText,
+                    runs = listOf(DocxRun(text = cleanText)),
+                    isBullet = isBullet
+                )
+            }
+        return createRichDocx(title, paragraphs)
     }
 
     private fun escapeXml(str: String): String {

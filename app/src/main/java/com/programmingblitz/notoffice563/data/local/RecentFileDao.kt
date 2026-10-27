@@ -11,6 +11,9 @@ interface RecentFileDao {
     @Query("SELECT * FROM recent_files ORDER BY lastOpened DESC")
     fun getAllRecentFiles(): Flow<List<RecentFileEntity>>
 
+    @Query("SELECT * FROM recent_files ORDER BY lastOpened DESC")
+    suspend fun getAllRecentFilesList(): List<RecentFileEntity>
+
     @Query("SELECT * FROM recent_files ORDER BY lastOpened DESC LIMIT :limit")
     fun getRecentFilesLimited(limit: Int): Flow<List<RecentFileEntity>>
 

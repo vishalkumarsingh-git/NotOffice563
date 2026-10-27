@@ -28,11 +28,14 @@ class SearchViewModel(
         _query,
         repository.allRecentFiles
     ) { query, allFiles ->
+        val deduplicatedFiles = allFiles.distinctBy { file ->
+            file.displayName.trim().lowercase()
+        }
         val results = if (query.isBlank()) {
             emptyList()
         } else {
             val q = query.trim().lowercase()
-            allFiles.filter { file ->
+            deduplicatedFiles.filter { file ->
                 file.displayName.lowercase().contains(q) ||
                         file.extension.lowercase().contains(q) ||
                         file.fileType.lowercase().contains(q)
@@ -42,7 +45,7 @@ class SearchViewModel(
         SearchUiState(
             query = query,
             results = results,
-            totalWorkspaceFiles = allFiles.size,
+            totalWorkspaceFiles = deduplicatedFiles.size,
             isSearching = query.isNotBlank()
         )
     }.stateIn(

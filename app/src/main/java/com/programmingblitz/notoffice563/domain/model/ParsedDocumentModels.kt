@@ -1,13 +1,32 @@
 package com.programmingblitz.notoffice563.domain.model
 
-data class DocxParagraph(
+enum class DocxAlignment {
+    LEFT, CENTER, RIGHT, JUSTIFY
+}
+
+data class DocxRun(
     val text: String,
+    val isBold: Boolean = false,
+    val isItalic: Boolean = false,
+    val isUnderline: Boolean = false,
+    val fontSizeSp: Float? = null
+)
+
+data class DocxParagraph(
+    val text: String = "",
+    val runs: List<DocxRun> = emptyList(),
     val isHeading: Boolean = false,
     val headingLevel: Int = 0,
     val isBullet: Boolean = false,
+    val isNumbered: Boolean = false,
     val isBold: Boolean = false,
-    val isItalic: Boolean = false
-)
+    val isItalic: Boolean = false,
+    val isUnderline: Boolean = false,
+    val alignment: DocxAlignment = DocxAlignment.LEFT
+) {
+    val fullText: String
+        get() = if (runs.isNotEmpty()) runs.joinToString("") { it.text } else text
+}
 
 data class DocxTable(
     val rows: List<List<String>>

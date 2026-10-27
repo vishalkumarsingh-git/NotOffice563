@@ -36,16 +36,23 @@ class DocumentRepository(
         SafHelper.takePersistableUriPermission(context.contentResolver, uri)
         val metadata = SafHelper.queryMetadata(context, uri)
 
-        val canonicalUriString = uri.normalizeScheme().toString()
         val rawUriString = uri.toString()
-        val decodedUriString = Uri.decode(rawUriString)
+        val canonicalUriString = Uri.decode(uri.normalizeScheme().toString())
 
-        var existing = recentFileDao.getByUri(canonicalUriString)
-            ?: recentFileDao.getByUri(rawUriString)
-            ?: recentFileDao.getByUri(decodedUriString)
+        val allExisting = recentFileDao.getAllRecentFilesList()
 
-        if (existing != null && existing.uri != canonicalUriString) {
-            recentFileDao.deleteByUri(existing.uri)
+        val existing = allExisting.find {
+            it.uri == canonicalUriString ||
+                    it.uri == rawUriString ||
+                    Uri.decode(it.uri) == canonicalUriString ||
+                    it.displayName.equals(metadata.displayName, ignoreCase = true)
+        }
+
+        // Delete any redundant/stale entries that share the same display name or old URIs
+        for (item in allExisting) {
+            if ((item.displayName.equals(metadata.displayName, ignoreCase = true) || Uri.decode(item.uri) == canonicalUriString) && item.uri != canonicalUriString) {
+                recentFileDao.deleteByUri(item.uri)
+            }
         }
 
         val entity = RecentFileEntity(

@@ -65,6 +65,13 @@ object PptxGenerator {
         return buildPptxZip(slides)
     }
 
+    fun buildPptxFromPresentation(parsedPresentation: com.programmingblitz.notoffice563.domain.model.ParsedPresentation): ByteArray {
+        val slideDataList = parsedPresentation.slides.map { s ->
+            SlideData(title = s.title, bullets = s.bodyBullets)
+        }
+        return buildPptxZip(if (slideDataList.isNotEmpty()) slideDataList else listOf(SlideData("Untitled Slide", emptyList())))
+    }
+
     private fun buildPptxZip(slides: List<SlideData>): ByteArray {
         val bos = ByteArrayOutputStream()
         ZipOutputStream(bos).use { zos ->

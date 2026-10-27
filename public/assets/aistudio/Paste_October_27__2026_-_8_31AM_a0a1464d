@@ -1,0 +1,843 @@
+# NotOffice563 — Complete Motion Engineering, Micro-Interaction, Gesture Physics & Haptic Feedback Specification
+
+## Project Context
+
+You are working on **NotOffice563**, an existing native Android application built with Kotlin and Jetpack Compose.
+
+The application already has its interface, Liquid Glass-inspired visual design, navigation, document editors, and existing functionality. Your assignment is to add a comprehensive, production-quality interaction system covering animations, transitions, gestures, tactile feedback, loading states, success/error feedback, and micro-interactions.
+
+This is an enhancement task. Do not replace the existing application, redesign working screens from scratch, or remove existing functionality.
+
+### Core design philosophy
+
+The experience should combine:
+
+- **iOS 26 Liquid Glass:** fluid material movement, subtle refraction-inspired highlights, responsive surfaces, floating navigation, and cohesive transitions.
+- **Microsoft 365:** fast productivity workflows, predictable controls, precise document editing, clear selection states, and minimal interruption.
+- **Native Android:** correct gesture behavior, system navigation integration, accessibility, platform haptics, and reliable performance.
+
+The result should feel responsive and refined, not bouncy, noisy, or overloaded with animation.
+
+**Critical requirement:** animations must reflect genuine application state. Haptics must correspond to meaningful user actions. Never use decorative animation to disguise non-functional controls.
+
+---
+
+# PHASE 1 — AUDIT AND ARCHITECTURE
+
+## 1. Inspect the Entire Existing Application
+
+Before writing code, inspect:
+
+- All Kotlin source files.
+- All Compose screens and reusable UI components.
+- Navigation graph and destination definitions.
+- Bottom navigation dock.
+- Buttons, icon buttons, cards, menus, dialogs, and sheets.
+- Word editor and formatting toolbar.
+- Spreadsheet grid, formula bar, and sheet tabs.
+- Presentation editor and slide filmstrip.
+- PDF reader and annotation tools.
+- Search and filtering interfaces.
+- Profile and Settings.
+- Save, loading, success, and error states.
+- Existing gesture handlers.
+- Existing haptic or vibration implementations.
+- Current Compose, Material, Navigation, and AndroidX dependency versions.
+- Current minimum SDK and supported Android versions.
+
+Create an inventory of interactive components and their current behavior.
+
+Identify duplicated click handlers, conflicting gesture detectors, animations triggered by recomposition, and UI elements that currently provide no feedback.
+
+Do not assume that a component is implemented just because a corresponding screen exists.
+
+## 2. Build a Reusable Motion Architecture
+
+Create a centralized motion system instead of scattering arbitrary animation constants across the application.
+
+Use a structure appropriate to the existing project, such as:
+
+- `MotionTokens.kt`
+- `MotionSpecs.kt`
+- `MotionModifiers.kt`
+- `HapticFeedbackManager.kt`
+- `HapticType.kt`
+- `MotionPreferences.kt`
+
+These names are suggestions, not mandatory filenames. Follow the repository's existing architecture.
+
+Centralize:
+
+- Animation durations.
+- Easing curves.
+- Spring stiffness and damping.
+- Enter and exit transitions.
+- Press-response parameters.
+- Selection-indicator transitions.
+- Gesture thresholds and settling behavior.
+- Haptic semantic mappings.
+- Reduced-motion behavior.
+
+Prefer strongly typed, reusable definitions rather than unexplained numeric literals throughout the codebase.
+
+Keep animation state separate from document content and business logic.
+
+## 3. Suggested Motion Timing System
+
+Use the following values as starting points. Tune them through actual emulator testing instead of treating them as inflexible requirements.
+
+| Interaction | Target duration |
+|---|---:|
+| Immediate press response | 60–100 ms |
+| Icon state change | 100–160 ms |
+| Small selection transition | 120–180 ms |
+| Tooltip or compact popup | 120–190 ms |
+| Dropdown or contextual menu | 150–220 ms |
+| Bottom sheet entrance | 220–320 ms |
+| Dialog entrance | 170–240 ms |
+| Small content transition | 160–240 ms |
+| Full-screen navigation | 200–300 ms |
+| Dock selection movement | 180–280 ms |
+| Success-state transition | 150–250 ms |
+
+These are design targets, not delays to insert before an action. Business operations, saving, and navigation must not be artificially delayed until animations finish.
+
+Use suitable easing curves:
+
+- Quick ease-out for press feedback and menu entrances.
+- Smooth ease-in-out for reversible visual state changes.
+- Spring-based movement for the dock indicator and interactive drag settling.
+- A short linear or gently eased transition for progress indicators where appropriate.
+
+Avoid a spring animation for every component. Not all UI movement needs a physical bounce.
+
+---
+
+# PHASE 2 — GLOBAL TAP AND PRESS INTERACTIONS
+
+## 4. Buttons and Icon Buttons
+
+Audit every button throughout the app.
+
+For a typical button:
+
+1. On press, provide an immediate visual response.
+2. Slightly reduce its scale or adjust its surface highlight.
+3. Transition its icon or label state if the action changes the UI.
+4. On release, return smoothly to the resting state.
+5. On cancellation, restore the resting state without firing the action.
+6. Execute the actual action exactly once.
+
+Use conservative starting values for press scaling, such as approximately `0.97–0.99`, depending on the component's size and visual role.
+
+Rules:
+
+- Do not scale large text fields or document canvases unnecessarily.
+- Do not animate the layout dimensions of a button during every press.
+- Do not change the component's clickable area as it animates.
+- Preserve ripple-free Liquid Glass styling where appropriate, but provide a visible alternative press indication.
+- Support disabled, focused, hovered, pressed, and selected states.
+- Ensure rapid repeated interactions remain responsive.
+
+A press animation must never consume the click event or block the actual operation.
+
+## 5. Cards, Files, and Category Tiles
+
+Apply appropriate feedback to document cards, recent-file rows, category tiles, and selectable settings rows.
+
+When a document row is tapped:
+
+- Provide immediate pressed feedback.
+- Animate the selected or pressed surface subtly.
+- Open the correct document through the existing navigation flow.
+- Avoid animating the file row into an incorrect destination or showing a false loading state.
+
+When a file action menu opens:
+
+- Keep the file row stable.
+- Display the contextual menu with a short opacity and offset transition.
+- Ensure the menu is anchored to the correct file.
+
+For long-press actions:
+
+- Trigger only when the gesture is recognized as a long press.
+- Avoid firing both the long-press action and the ordinary click action.
+- Provide a subtle haptic response when entering contextual-selection mode if supported.
+
+For destructive actions, show the existing confirmation workflow. Do not introduce destructive behavior simply to demonstrate gesture animations.
+
+## 6. Toggles, Checkboxes, and Selection Controls
+
+Add small, state-driven transitions for:
+
+- Checkboxes.
+- Radio buttons.
+- Switches.
+- Theme selection.
+- Formatting-toolbar toggles.
+- Filter chips.
+- Document-category selection.
+- Sheet tabs.
+- Settings options.
+
+Animate the actual checked or selected state, not a separate visual state that can become inconsistent.
+
+For example, when switching from Light to Dark theme:
+
+- Update the actual theme preference.
+- Transition the surface colors without a flash.
+- Preserve navigation and scroll position.
+- Do not recreate the entire navigation graph.
+- Do not animate every document or spreadsheet cell individually.
+
+Selection haptics should occur only when the state actually changes. Repeated taps on an already-selected option should not produce redundant feedback unless there is a clear interaction reason.
+
+---
+
+# PHASE 3 — LIQUID GLASS MOTION
+
+## 7. Bottom Dock Selection Animation
+
+Enhance the existing Liquid Glass bottom dock without replacing its design.
+
+When the user switches destinations:
+
+- Move the selected indicator smoothly toward the new item.
+- Use a restrained spring animation with minimal overshoot.
+- Transition selected icon tint and label visibility.
+- Keep unselected items stable.
+- Avoid shifting the dock's outer dimensions unnecessarily.
+- Ensure the indicator always matches the actual navigation destination.
+
+The indicator must not lag behind navigation or continue animating toward an outdated destination after rapid taps.
+
+If the user quickly taps Home, Files, Settings, and Profile, navigation and selected-state updates must remain deterministic.
+
+## 8. Glass Surface Interaction
+
+For interactive glass surfaces, use subtle changes in:
+
+- Surface tint.
+- Highlight opacity.
+- Shadow elevation.
+- Border highlight.
+- Selected-state emphasis.
+
+Keep these effects local to the interacted component.
+
+Do not continuously animate blur radius, surface reflections, or full-screen gradients. Continuous blur animation is expensive and rarely adds useful feedback.
+
+Do not make the dock pulse constantly.
+
+## 9. Modal and Overlay Material Transitions
+
+For existing menus, dialogs, popovers, and bottom sheets:
+
+- Animate opacity and modest vertical movement.
+- Use a restrained scale transition only where it suits the component.
+- Keep the background scrim transition synchronized with the foreground surface.
+- Avoid abrupt changes in glass tint.
+- Restore the underlying screen correctly when dismissed.
+
+Use a predictable reverse transition when closing an overlay.
+
+For bottom sheets, preserve drag-to-dismiss behavior and allow the user to dismiss them immediately without waiting for an entrance animation to finish.
+
+---
+
+# PHASE 4 — DROPDOWNS, MENUS, AND EXPANDABLE CONTENT
+
+## 10. Dropdown Menus
+
+Every existing dropdown must have a deliberate entrance and exit transition.
+
+Entrance:
+
+- Start with low opacity.
+- Use a small vertical offset from the anchor.
+- Transition to full opacity and the final position.
+- Expand the menu smoothly without making the contents appear to jump.
+
+Exit:
+
+- Reduce opacity and collapse the surface smoothly.
+- Keep the transition brief.
+- Do not delay dismissal if the user navigates away or presses Back.
+
+Ensure:
+
+- The menu stays inside screen bounds.
+- The menu remains usable when the keyboard is visible.
+- The menu does not cover a critical action unnecessarily.
+- Selection dismisses the menu when appropriate.
+- Outside taps dismiss the menu correctly.
+- Nested menus and submenus maintain correct focus.
+- Reopening a menu uses current data rather than stale values.
+
+## 11. Expandable Sections
+
+For expandable Settings sections, document details, and advanced formatting options:
+
+- Animate height and opacity together.
+- Avoid large layout jumps.
+- Preserve scroll position where feasible.
+- Prevent controls from being clipped during the transition.
+- Ensure expanded content remains accessible to screen readers.
+
+Do not use `animateContentSize()` indiscriminately on very large document trees or spreadsheet grids.
+
+## 12. Tooltips and Contextual Menus
+
+Use short fade transitions for tooltips and subtle movement for contextual menus.
+
+Tooltips must not repeatedly appear while the user is trying to interact with an adjacent control.
+
+Context menus should be positioned relative to the source component and should not animate from unrelated screen coordinates.
+
+---
+
+# PHASE 5 — NAVIGATION AND GESTURE PHYSICS
+
+## 13. Screen Navigation
+
+Apply consistent transitions to the existing navigation architecture.
+
+Suggested behavior:
+
+- Forward navigation: a small horizontal offset combined with fading.
+- Back navigation: the inverse movement.
+- Top-level tab switching: minimal movement and a short content transition.
+- Opening a document: a subtle transition that maintains context.
+- Opening a modal: a short upward movement with fading.
+- Closing a modal: reverse the entrance animation.
+- Changing a category filter: animate content replacement without unnecessarily moving the entire screen.
+
+Use direction-aware navigation transitions where supported by the existing dependencies.
+
+Do not rebuild the navigation system simply to add animations.
+
+Navigation must remain immediate, with no artificial wait for decorative motion.
+
+## 14. Back Gestures and Interactive Dismissal
+
+Audit the interaction between:
+
+- Android's system Back gesture.
+- Compose Back handling.
+- Bottom-sheet dismissal.
+- Full-screen editor navigation.
+- Text-field focus and the keyboard.
+- In-app horizontal swipe gestures.
+
+A Back gesture should dismiss the keyboard or active modal when that is the correct behavior before leaving the current screen.
+
+Do not intercept the system Back gesture unnecessarily.
+
+Where the existing navigation architecture supports interactive predictive Back, use its progress to drive a restrained visual transition. If the current setup does not support it reliably, use the standard Back behavior rather than implementing a fragile imitation.
+
+## 15. Swipe and Drag Behavior
+
+For existing draggable elements:
+
+- Provide immediate feedback when a drag starts.
+- Follow the pointer or finger smoothly.
+- Respect touch slop.
+- Use sensible thresholds for snapping or dismissal.
+- Animate to the nearest valid resting position when released.
+- Cancel cleanly if the gesture is interrupted.
+- Trigger haptic feedback at meaningful thresholds, not continuously during movement.
+
+For swipe-to-dismiss, show the actual dismissal affordance while dragging. Destructive actions must still have appropriate protection.
+
+For bottom sheets, distinguish a vertical drag from scrolling the content inside the sheet.
+
+For slide filmstrips, distinguish horizontal scrolling from slide reordering.
+
+For spreadsheet grids, distinguish cell selection, text editing, and grid scrolling.
+
+Do not add global swipe handlers that compete with the document editors.
+
+## 16. Pull-to-Refresh
+
+Only animate pull-to-refresh on screens where refreshing is a meaningful, implemented operation.
+
+Do not add a decorative refresh gesture to local document lists if there is no refresh operation.
+
+When supported:
+
+- Show feedback during the pull.
+- Trigger the refresh exactly once.
+- Display actual progress.
+- End the indicator when the operation completes.
+- Report errors honestly.
+
+---
+
+# PHASE 6 — WORD EDITOR
+
+## 17. Rich-Text Formatting Controls
+
+Animate toolbar states without interfering with text editing.
+
+When Bold, Italic, Underline, alignment, lists, or font size changes:
+
+- Update the actual editor state.
+- Transition the selected control's surface and icon state.
+- Keep the cursor position and selection stable.
+- Avoid animating the entire document canvas.
+- Avoid changing the editor's height or resetting scroll position unnecessarily.
+
+When a formatting menu opens, animate the menu—not the text being edited.
+
+Haptics may be used when a formatting action is applied, but avoid feedback for every character typed.
+
+## 18. Cursor, Selection, and Keyboard
+
+Preserve:
+
+- Cursor position.
+- Text selection.
+- Composing text region.
+- Keyboard focus.
+- Scroll position.
+- Rich-text spans.
+- Undo and redo history.
+
+Never recreate the text field merely to animate a formatting change.
+
+Avoid custom animations that interfere with Android's text selection handles, copy/paste menu, autocorrect, or input-method behavior.
+
+## 19. Word Save Feedback
+
+Use a clear state machine for document saving:
+
+`Idle → Saving → Saved` or `Idle → Saving → Error`
+
+Animate transitions between these states without replacing the editor.
+
+- Saving: show a restrained progress indicator.
+- Saved: show a brief, subtle confirmation.
+- Error: show an actionable error message.
+- Unsaved changes: keep the unsaved state visible until a successful write.
+
+Trigger success haptics only after the file has actually been written successfully.
+
+Do not show success feedback when the user cancels Save As or when the file operation fails.
+
+---
+
+# PHASE 7 — SPREADSHEET
+
+## 20. Cell Selection and Editing
+
+When selecting a cell:
+
+- Update the selection border and relevant headers.
+- Use a short transition only where it improves clarity.
+- Keep the grid's geometry stable.
+- Maintain the correct active cell.
+- Avoid animating every cell when the selection changes.
+
+When entering edit mode:
+
+- Preserve the selected cell.
+- Keep the formula/input bar synchronized.
+- Maintain keyboard focus.
+- Provide a subtle focus transition.
+- Avoid causing the grid to jump unexpectedly when the keyboard opens.
+
+When committing a value:
+
+- Persist the value in the spreadsheet model.
+- Show a clear validation or save state if appropriate.
+- Do not trigger a haptic for every intermediate keystroke.
+
+## 21. Row, Column, and Sheet Operations
+
+For row/column insertion, deletion, and sheet changes:
+
+- Animate structural changes only when the operation and visible range make this practical.
+- Avoid expensive animations across large ranges.
+- Keep selection and scroll position consistent.
+- Use a restrained selection transition for sheet tabs.
+- Provide haptic feedback for meaningful structural changes, not routine cell navigation.
+
+---
+
+# PHASE 8 — POWERPOINT
+
+## 22. Slide Navigation
+
+When switching slides from the filmstrip:
+
+- Highlight the newly selected thumbnail.
+- Transition the slide canvas subtly.
+- Keep the selected slide synchronized with the editor model.
+- Avoid unnecessary full-screen movement when rapidly navigating multiple slides.
+
+Do not play presentation transitions in the editing interface unless explicitly requested by the user.
+
+## 23. Slide and Object Operations
+
+For adding, duplicating, deleting, or reordering slides:
+
+- Provide immediate interaction feedback.
+- Animate filmstrip changes when practical.
+- Preserve selection and slide order.
+- Use an appropriate confirmation for destructive operations.
+- Ensure the operation completes correctly before displaying a success state.
+
+For text boxes and other selectable objects:
+
+- Animate selection outlines and contextual toolbars.
+- Keep the object's actual position and size synchronized with the model.
+- Do not make the object appear to move when only its selection border is changing.
+
+---
+
+# PHASE 9 — PDF READER
+
+## 24. Page Navigation and Zoom
+
+For page changes:
+
+- Use a subtle transition only when it improves orientation.
+- Avoid a slow full-page fade for every small scroll.
+- Keep continuous scrolling fluid.
+- Maintain accurate page numbering.
+
+For zoom:
+
+- Preserve the user's focal point when zooming where feasible.
+- Avoid animating the entire document independently of the user's pinch gesture.
+- Keep annotation coordinates aligned with the PDF content.
+- Avoid extra haptics during continuous pinch updates.
+
+## 25. Annotation Tools
+
+When switching between highlight, drawing, text-note, and selection modes:
+
+- Animate the active tool state.
+- Provide a subtle selection haptic when appropriate.
+- Preserve the active annotation tool until the user changes it or the workflow requires exiting it.
+- Do not trigger haptics on every pointer movement.
+- Keep drawing responsive and accurate.
+
+After an annotation is saved successfully, display an appropriate confirmation. If saving fails, preserve the annotation in memory where feasible and show a clear error.
+
+---
+
+# PHASE 10 — SEARCH, FILE PICKERS, SETTINGS, AND PROFILE
+
+## 26. Search
+
+Implement:
+
+- A smooth search-field focus transition.
+- Animated appearance of search suggestions, if implemented.
+- A short transition when results change.
+- Loading and empty states.
+- Clear-button feedback.
+- Correct keyboard focus and Back behavior.
+
+Do not animate every result on every keystroke in a way that causes flicker or makes selection difficult.
+
+Debounce expensive queries where appropriate, but do not delay simple local filtering unnecessarily.
+
+## 27. File Browser
+
+For file filtering and sorting:
+
+- Animate changes in the active filter.
+- Keep the selected file stable when possible.
+- Avoid arbitrary card rearrangement animations that make files difficult to follow.
+- Animate empty-state appearance when appropriate.
+- Preserve scroll position during minor changes where practical.
+
+File operations must not be delayed until visual animations finish.
+
+## 28. Settings and Profile
+
+For theme changes, preference toggles, expandable sections, and account dialogs:
+
+- Animate the actual preference state.
+- Keep the settings layout stable.
+- Do not reset the user's scroll position unnecessarily.
+- Use subtle confirmation feedback for successfully changed preferences.
+- Show honest errors when a preference cannot be persisted.
+
+Do not animate fake sign-in or cloud synchronization states.
+
+---
+
+# PHASE 11 — CENTRALIZED HAPTIC FEEDBACK
+
+## 29. Create Semantic Haptic Types
+
+Implement a centralized haptic manager or utility integrated with the existing Compose architecture.
+
+Define semantic events rather than arbitrary vibration durations.
+
+Suggested events:
+
+- `SELECTION`
+- `LIGHT_IMPACT`
+- `MEDIUM_IMPACT`
+- `SUCCESS`
+- `WARNING`
+- `ERROR`
+- `LONG_PRESS`
+- `DRAG_THRESHOLD`
+
+Use names appropriate to the existing code style if needed.
+
+Map each event to supported Android haptic constants or Compose's `LocalHapticFeedback` APIs. Verify API availability against the actual minimum SDK and dependency versions.
+
+Do not invent Android constants or assume every device supports the same effect.
+
+## 30. Haptic Intensity Mapping
+
+Use these guidelines:
+
+| Event | Suggested feedback |
+|---|---|
+| Bottom dock destination change | Light selection |
+| Category or sheet-tab change | Light selection |
+| Formatting toggle | Light impact or selection |
+| Opening a contextual action menu | Light feedback, only if meaningful |
+| Long-press activation | Short contextual feedback |
+| Crossing a meaningful drag threshold | Selection |
+| Confirming an important destructive action | Medium impact, sparingly |
+| Successful document save | Light success feedback |
+| Successful creation or export | Light success feedback |
+| Invalid file name or validation error | Brief error feedback |
+| Failed save or export | Error feedback |
+| Permission or storage failure | Error or warning feedback |
+| Routine scrolling | None |
+| Ordinary text entry | None |
+| Cursor movement | None |
+| Every spreadsheet cell traversed during a drag | None |
+| Every animation frame | None |
+| Intermediate saving progress | None |
+
+These are guidelines, not a requirement to vibrate for every listed event. Use judgment and avoid redundant feedback.
+
+## 31. Haptic Implementation Rules
+
+- Use semantic platform haptics where supported.
+- Use `LocalHapticFeedback` for suitable Compose interactions when appropriate.
+- If using Android `View` haptics, use a suitable attached view and verify that the selected constants are supported.
+- Do not request `VIBRATE` permission unless the chosen API actually requires it.
+- Do not use long custom vibration waveforms for routine UI feedback.
+- Respect the user's system touch-feedback preferences as far as the platform allows.
+- Do not trigger feedback during recomposition.
+- Do not trigger haptics from `LaunchedEffect` repeatedly because a state value is re-emitted.
+- Trigger haptics at the actual action boundary.
+- Ensure one user action causes at most one intentional haptic event.
+- Prevent nested click handlers from triggering duplicate feedback.
+- Keep haptic execution lightweight and on the appropriate UI interaction path.
+- Never let a haptic failure crash the application.
+
+## 32. Error and Warning Feedback
+
+Use a consistent error-feedback sequence:
+
+1. Validate the action.
+2. If invalid, keep the user's input intact.
+3. Show a readable, actionable error.
+4. Briefly emphasize the affected field or control when helpful.
+5. Trigger one short error haptic when appropriate and supported.
+6. Restore the normal visual state after the feedback transition.
+7. Keep screen-reader users informed through appropriate accessibility announcements.
+
+Examples include:
+
+- Invalid file name.
+- Unsupported file format.
+- Failed file read.
+- Failed document save.
+- Storage permission denied.
+- Failed export.
+- Invalid spreadsheet input where validation exists.
+- Missing required information.
+
+Do not shake the entire screen. Prefer a subtle local horizontal offset or a clear border/state transition on the relevant control.
+
+Do not trigger error haptics for every keystroke during validation. Prefer feedback after submission or when the error first becomes actionable.
+
+## 33. Success Feedback
+
+For completed operations:
+
+- Confirm only after the underlying operation succeeds.
+- Use a brief visual state transition.
+- Optionally use one light haptic.
+- Avoid intrusive dialogs for ordinary successful actions.
+- Do not make success messages persist unnecessarily.
+
+Examples:
+- Document saved.
+- File exported.
+- Document created.
+- Annotation persisted.
+- Settings preference saved.
+
+If an operation is cancelled, do not display a success message.
+
+---
+
+# PHASE 12 — ACCESSIBILITY AND REDUCED MOTION
+
+## 34. Respect System Preferences
+
+Inspect the current Compose APIs and Android version targets for animation-scale and reduced-motion support.
+
+Where feasible:
+
+- Respect system animation scales.
+- Offer simplified transitions when reduced motion is enabled.
+- Do not require animations to reveal essential content.
+- Ensure haptics are not required to understand an action.
+- Keep screen-reader focus stable through transitions.
+- Preserve keyboard and D-pad navigation.
+- Ensure selected, disabled, error, and success states are exposed semantically.
+
+Do not invent a global reduced-motion preference API if it is not available in the current project. Use supported mechanisms and document any limitations.
+
+## 35. Avoid Accessibility Regressions
+
+Do not:
+
+- Remove accessible labels while replacing icons.
+- Make the visual dock indicator the only indication of the selected destination.
+- Communicate errors through color alone.
+- Use motion that causes repeated accessibility announcements.
+- Delay focus movement until a long animation completes.
+- Make controls unreachable during animated layout changes.
+
+---
+
+# PHASE 13 — PERFORMANCE AND STABILITY
+
+## 36. Low-Memory Device Considerations
+
+The application must remain responsive on low-memory Android hardware.
+
+- Prefer hardware-accelerated, inexpensive transforms when appropriate.
+- Avoid continuously animating large blurred surfaces.
+- Avoid recomposing large document trees for local press feedback.
+- Avoid allocating animation state inside frequently recomposed loops.
+- Use stable keys for animated list items.
+- Avoid animated content-size changes on enormous grids.
+- Do not animate every spreadsheet cell during scrolling.
+- Keep PDF rendering and annotation operations responsive.
+- Do not execute file I/O or expensive computations on the main thread.
+- Avoid unnecessary dependencies.
+- Do not upgrade the project's minimum SDK.
+
+Animation must not cause document corruption, cursor loss, repeated writes, duplicated recent files, or navigation errors.
+
+## 37. State and Lifecycle Correctness
+
+Audit animation behavior during:
+
+- Rapid repeated taps.
+- Rotation or configuration changes where supported.
+- App backgrounding and resuming.
+- Keyboard opening and closing.
+- Navigation during an active animation.
+- Dialog dismissal during an animation.
+- Save completion while navigating away.
+- Failed network or file operations, where applicable.
+
+Use stable state ownership and lifecycle-aware collection for relevant asynchronous state.
+
+Avoid stale callbacks, duplicated collectors, and effects that run more than once unintentionally.
+
+---
+
+# PHASE 14 — IMPLEMENTATION AND TESTING
+
+## 38. Implementation Order
+
+Work in this order:
+
+1. Audit the existing project and establish reusable motion/haptic tokens.
+2. Implement a reusable press-feedback modifier or interaction component.
+3. Implement the Liquid Glass dock selection transition.
+4. Add dropdown, menu, dialog, and bottom-sheet transitions.
+5. Add navigation transitions.
+6. Add editor-specific micro-interactions.
+7. Add gesture-aware feedback to existing gestures.
+8. Integrate semantic haptics.
+9. Add error and success feedback.
+10. Verify accessibility, lifecycle correctness, and performance.
+11. Build and test the application.
+
+Do not make an unrelated redesign part of this task.
+
+## 39. Mandatory Test Matrix
+
+Verify at minimum:
+
+**Interaction feedback**
+- Buttons and icon buttons respond immediately.
+- Disabled buttons do not fire actions.
+- Rapid repeated taps do not duplicate operations.
+- Selection states remain synchronized with real application state.
+
+**Menus and navigation**
+- Dropdowns open and close.
+- Outside tap and Back dismiss overlays correctly.
+- Forward and Back navigation have coherent transitions.
+- Dock selection always matches the current destination.
+- No menus or dialogs remain orphaned after navigation.
+
+**Gestures**
+- System Back remains functional.
+- Scrolling does not trigger unintended swipes.
+- Word text selection remains intact.
+- Spreadsheet cell editing and scrolling remain distinct.
+- PDF pinch zoom and annotation remain accurate.
+- Slide reordering remains correct if implemented.
+
+**Haptics**
+- Each intended event produces at most one haptic.
+- Ordinary typing and scrolling do not trigger haptics.
+- Save success triggers feedback only after a successful write.
+- Failed saves trigger error feedback without losing edits.
+- Unsupported haptic effects fail safely.
+
+**Accessibility**
+- Navigation works with screen readers.
+- Selected and disabled states are announced.
+- Focus remains correct after menus and dialogs close.
+- Reduced animation does not break any workflow.
+
+**Performance**
+- No visible jank during scrolling.
+- No continuous unnecessary animations.
+- No excessive blur updates.
+- No repeated recompositions caused by animation feedback.
+- No loss of editor state during transitions.
+
+Test both light and dark themes on the actual emulator.
+
+## 40. Final Deliverables
+
+Implement the system in the existing repository.
+
+After implementation, provide:
+
+1. A list of files created or modified.
+2. The reusable motion architecture and timing values.
+3. The components that now have animated interactions.
+4. The semantic haptic events and where each is used.
+5. Gesture conflicts identified and resolved.
+6. Accessibility and performance safeguards.
+7. Actual build and emulator test results.
+8. Any remaining limitations.
+
+Do not claim all interactions are complete without auditing the actual screens and code.
+
+**Definition of done:** NotOffice563 feels consistently responsive across its entire interface, with purposeful motion, a refined Liquid Glass dock, correct gesture behavior, selective haptic feedback, and no regression to document editing, saving, navigation, accessibility, or performance.

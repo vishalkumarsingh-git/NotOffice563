@@ -204,6 +204,10 @@ fun ViewerScreen(
                         onToggleEditing = { viewModel.toggleDocxEditing(it) },
                         onTitleChange = { viewModel.updateDocxEditTitle(it) },
                         onContentChange = { viewModel.updateDocxEditContent(it) },
+                        onParagraphsChange = { paragraphs, rawText ->
+                            viewModel.updateDocxParagraphs(paragraphs, rawText)
+                        },
+                        onSaveOriginal = { viewModel.saveOriginalDocx(context) },
                         onSaveCopy = {
                             viewModel.saveEditedDocxCopy(context) { newUri ->
                                 onOpenNewDocument(newUri.toString())
@@ -217,14 +221,19 @@ fun ViewerScreen(
                     XlsxViewer(
                         state = state,
                         onSelectSheet = { viewModel.setSheetIndex(it) },
-                        onSelectCell = { ref, valStr -> viewModel.selectCell(ref, valStr) }
+                        onSelectCell = { ref, valStr -> viewModel.selectCell(ref, valStr) },
+                        onCellValChange = { viewModel.updateSelectedCellValue(it) },
+                        onSaveOriginal = { viewModel.saveOriginalXlsx(context) }
                     )
                 }
 
                 is ViewerContentState.PptxContent -> {
                     PptxViewer(
                         state = state,
-                        onSlideSelect = { viewModel.setSlideIndex(it) }
+                        onSlideSelect = { viewModel.setSlideIndex(it) },
+                        onAddSlide = { viewModel.addSlide() },
+                        onDeleteSlide = { viewModel.deleteSlide(it) },
+                        onSaveOriginal = { viewModel.saveOriginalPptx(context) }
                     )
                 }
 

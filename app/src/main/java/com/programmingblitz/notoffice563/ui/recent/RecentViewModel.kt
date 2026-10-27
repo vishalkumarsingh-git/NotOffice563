@@ -33,8 +33,11 @@ class RecentViewModel(
         repository.allRecentFiles,
         preferences.userPreferences
     ) { allFiles, prefs ->
+        val deduplicatedFiles = allFiles.distinctBy { file ->
+            file.displayName.trim().lowercase()
+        }
         RecentUiState(
-            files = allFiles.take(prefs.maxRecentFiles),
+            files = deduplicatedFiles.take(prefs.maxRecentFiles),
             maxLimit = prefs.maxRecentFiles,
             isLoading = false
         )

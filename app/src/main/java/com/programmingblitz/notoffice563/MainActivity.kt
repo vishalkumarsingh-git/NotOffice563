@@ -158,7 +158,7 @@ class MainActivity : ComponentActivity() {
                 AppThemeMode.DARK -> true
             }
 
-            // Purge any previously created sample files to keep the workspace completely clean
+            // Purge any previously created sample files and deduplicate Room DB entries on app launch
             LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
                     try {
@@ -175,9 +175,13 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         val currentFiles = repository.allRecentFiles.first()
+                        val seenNames = mutableSetOf<String>()
                         for (file in currentFiles) {
-                            if (file.displayName.startsWith("Sample_") || file.uri.contains("Sample_")) {
+                            val key = file.displayName.trim().lowercase()
+                            if (seenNames.contains(key) || file.displayName.startsWith("Sample_") || file.uri.contains("Sample_")) {
                                 repository.removeRecent(file.uri)
+                            } else {
+                                seenNames.add(key)
                             }
                         }
                     } catch (_: Exception) {

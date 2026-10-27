@@ -48,11 +48,15 @@ class FilesViewModel(
         _searchQuery,
         preferences.userPreferences
     ) { allFiles, category, query, userPrefs ->
+        val deduplicatedFiles = allFiles.distinctBy { file ->
+            file.displayName.trim().lowercase()
+        }
+
         // 1. Filter by category
         val categoryFiltered = if (category == DocumentCategory.ALL) {
-            allFiles
+            deduplicatedFiles
         } else {
-            allFiles.filter { file ->
+            deduplicatedFiles.filter { file ->
                 val type = runCatching { DocumentType.valueOf(file.fileType) }.getOrDefault(DocumentType.UNKNOWN)
                 type.category == category
             }

@@ -68,18 +68,8 @@ fun NotOfficeDockBar(
     val haptic = LocalHapticFeedback.current
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    // Theme-adaptive glass capsule aesthetic
-    val dockContainerBg = if (isDark) {
-        blendAccent(AccentBlue, Color(0xFF10131C), 0.12f).copy(alpha = 0.94f)
-    } else {
-        Color.White.copy(alpha = 0.96f)
-    }
-
-    val dockBorderColor = if (isDark) {
-        AccentBlue.copy(alpha = 0.35f)
-    } else {
-        MaterialTheme.colorScheme.outline
-    }
+    val capsuleBrush = com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.getCapsuleBrush(isDark)
+    val borderBrush = com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.getGlassBorderBrush(isDark)
 
     Box(
         modifier = modifier
@@ -89,13 +79,12 @@ fun NotOfficeDockBar(
             .testTag("main_bottom_nav_bar"),
         contentAlignment = Alignment.Center
     ) {
-        Surface(
-            shape = SleekShapes.pill,
-            color = dockContainerBg,
-            border = BorderStroke(1.2.dp, dockBorderColor),
-            shadowElevation = if (isDark) 16.dp else 8.dp,
-            tonalElevation = 4.dp,
-            modifier = Modifier.clip(SleekShapes.pill)
+        Box(
+            modifier = Modifier
+                .clip(SleekShapes.pill)
+                .background(capsuleBrush)
+                .border(BorderStroke(1.2.dp, borderBrush), SleekShapes.pill)
+                .padding(horizontal = 6.dp, vertical = 6.dp)
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),

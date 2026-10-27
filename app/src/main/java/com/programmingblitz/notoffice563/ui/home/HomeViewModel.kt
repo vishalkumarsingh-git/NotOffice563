@@ -49,12 +49,19 @@ class HomeViewModel(
         repository.favoriteFiles,
         _storageInfo
     ) { allFiles, favorites, storage ->
+        val deduplicatedFiles = allFiles.distinctBy { file ->
+            file.displayName.trim().lowercase()
+        }
+        val deduplicatedFavorites = favorites.distinctBy { file ->
+            file.displayName.trim().lowercase()
+        }
+
         var docCount = 0
         var sheetCount = 0
         var pptCount = 0
         var pdfCount = 0
 
-        for (file in allFiles) {
+        for (file in deduplicatedFiles) {
             val type = runCatching { DocumentType.valueOf(file.fileType) }.getOrDefault(DocumentType.UNKNOWN)
             when (type.category) {
                 DocumentCategory.DOCUMENTS -> docCount++
@@ -66,8 +73,8 @@ class HomeViewModel(
         }
 
         HomeUiState(
-            recentFiles = allFiles.take(8),
-            favoriteFiles = favorites,
+            recentFiles = deduplicatedFiles.take(8),
+            favoriteFiles = deduplicatedFavorites,
             documentCount = docCount,
             spreadsheetCount = sheetCount,
             presentationCount = pptCount,

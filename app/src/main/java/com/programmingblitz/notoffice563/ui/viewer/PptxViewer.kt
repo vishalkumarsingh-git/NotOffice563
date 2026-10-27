@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.testTag
 import com.programmingblitz.notoffice563.ui.theme.PptPresentationAmber
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
@@ -51,6 +52,9 @@ import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 fun PptxViewer(
     state: ViewerContentState.PptxContent,
     onSlideSelect: (Int) -> Unit,
+    onAddSlide: (() -> Unit)? = null,
+    onDeleteSlide: ((Int) -> Unit)? = null,
+    onSaveOriginal: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -91,12 +95,17 @@ fun PptxViewer(
                     )
                 }
 
-                Icon(
-                    imageVector = Icons.Filled.Slideshow,
-                    contentDescription = null,
-                    tint = PptPresentationAmber,
-                    modifier = Modifier.size(20.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onSaveOriginal != null) {
+                        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                            text = "Save",
+                            onClick = onSaveOriginal,
+                            accentColor = PptPresentationAmber,
+                            height = 32.dp,
+                            modifier = Modifier.testTag("pptx_save_button")
+                        )
+                    }
+                }
             }
         }
 
@@ -264,15 +273,32 @@ fun PptxViewer(
             elevation = 4.dp
         ) {
             Column(modifier = Modifier.padding(vertical = 10.dp)) {
-                Text(
-                    text = "Slide Filmstrip",
-                    style = TextStyle(
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
-                    ),
-                    modifier = Modifier.padding(horizontal = 14.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Slide Filmstrip",
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                        )
+                    )
+
+                    if (onAddSlide != null) {
+                        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                            text = "+ Slide",
+                            onClick = onAddSlide,
+                            accentColor = PptPresentationAmber,
+                            height = 28.dp,
+                            modifier = Modifier.testTag("pptx_add_slide_button")
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
