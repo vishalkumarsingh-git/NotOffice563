@@ -21,7 +21,20 @@ enum class DocumentType(
     PPT_PPTX("pptx", DocumentCategory.PRESENTATIONS, "PowerPoint Presentation (.pptx)", false),
     PPT_PPT("ppt", DocumentCategory.PRESENTATIONS, "Legacy PowerPoint (.ppt)", true),
     PDF("pdf", DocumentCategory.PDFS, "Portable Document Format (.pdf)", false),
+    RTF("rtf", DocumentCategory.DOCUMENTS, "Rich Text Format (.rtf)", true),
+    CSV("csv", DocumentCategory.SPREADSHEETS, "Comma Separated Values (.csv)", true),
+    TSV("tsv", DocumentCategory.SPREADSHEETS, "Tab Separated Values (.tsv)", true),
+    TXT("txt", DocumentCategory.DOCUMENTS, "Plain Text (.txt)", false),
     UNKNOWN("bin", DocumentCategory.ALL, "Unknown Document", false);
+
+    val isWordDocument: Boolean
+        get() = this in listOf(WORD_DOCX, WORD_DOC, RTF, TXT)
+
+    val isSpreadsheet: Boolean
+        get() = this in listOf(EXCEL_XLSX, EXCEL_XLS, CSV, TSV)
+
+    val isPresentation: Boolean
+        get() = this in listOf(PPT_PPTX, PPT_PPT)
 
     companion object {
         fun fromExtension(ext: String?): DocumentType {
@@ -34,6 +47,10 @@ enum class DocumentType(
                 "pptx" -> PPT_PPTX
                 "ppt" -> PPT_PPT
                 "pdf" -> PDF
+                "rtf" -> RTF
+                "csv" -> CSV
+                "tsv" -> TSV
+                "txt", "text", "log" -> TXT
                 else -> UNKNOWN
             }
         }
@@ -47,6 +64,10 @@ enum class DocumentType(
                 "application/vnd.ms-excel" -> EXCEL_XLS
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation" -> PPT_PPTX
                 "application/vnd.ms-powerpoint" -> PPT_PPT
+                "text/rtf", "application/rtf" -> RTF
+                "text/csv", "text/comma-separated-values" -> CSV
+                "text/tab-separated-values" -> TSV
+                "text/plain" -> TXT
                 else -> null
             }
             if (byMime != null) return byMime

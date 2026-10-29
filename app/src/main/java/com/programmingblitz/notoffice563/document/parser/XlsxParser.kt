@@ -178,9 +178,9 @@ object XlsxParser {
                 }
             }
 
-            // Convert to 2D list
-            val finalRowCount = (maxRow + 1).coerceAtMost(200)
-            val finalColCount = (maxCol + 1).coerceAtMost(30)
+            // Convert to 2D list without arbitrary truncation
+            val finalRowCount = (maxRow + 1).coerceAtMost(5000)
+            val finalColCount = (maxCol + 1).coerceAtMost(702)
             val rows = mutableListOf<List<String>>()
 
             for (r in 0 until finalRowCount) {
