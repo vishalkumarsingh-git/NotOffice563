@@ -20,10 +20,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -91,38 +88,13 @@ fun SearchScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search Input
-            OutlinedTextField(
+            // Search Input with Liquid Glass Search Pill
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSearchPill(
                 value = uiState.query,
                 onValueChange = { viewModel.onQueryChange(it) },
-                placeholder = { Text("Search by name, format (pdf, docx, xlsx)...", style = MaterialTheme.typography.bodyMedium) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (uiState.query.isNotEmpty()) {
-                        LiquidGlassIconButton(
-                            onClick = { viewModel.onQueryChange("") },
-                            icon = Icons.Filled.Clear,
-                            contentDescription = "Clear",
-                            size = 32.dp
-                        )
-                    }
-                },
-                singleLine = true,
-                shape = SleekShapes.input,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
+                placeholder = "Search by name, format (pdf, docx, xlsx)...",
+                onClear = { viewModel.onQueryChange("") },
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
                     .testTag("universal_search_input")
             )

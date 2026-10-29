@@ -1,9 +1,6 @@
 package com.programmingblitz.notoffice563.ui.settings
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,33 +18,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
-import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
-import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,20 +44,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.programmingblitz.notoffice563.data.local.AppThemeMode
 import com.programmingblitz.notoffice563.data.local.FileSortOrder
 import com.programmingblitz.notoffice563.data.local.FileViewMode
-import com.programmingblitz.notoffice563.ui.theme.AccentBlue
-import com.programmingblitz.notoffice563.ui.theme.AccentBlueContainer
-import com.programmingblitz.notoffice563.ui.theme.ExpenseRed
-import com.programmingblitz.notoffice563.ui.theme.OnAccentBlueContainer
-import com.programmingblitz.notoffice563.ui.theme.SleekShapes
-import com.programmingblitz.notoffice563.ui.theme.SleekSizes
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFilterChip
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSegmentedControl
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassToggleSwitch
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -84,6 +71,7 @@ fun SettingsScreen(
     val prefs by viewModel.userPreferences.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showClearConfirmDialog by remember { mutableStateOf(false) }
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     LaunchedEffect(Unit) {
         viewModel.messageEvents.collect { message ->
@@ -93,35 +81,57 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = if (isDark) LiquidGlassTokens.DarkBaseBackground else LiquidGlassTokens.LightBaseBackground,
         topBar = {
-            TopAppBar(
-                navigationIcon = {
+            // Authentic iOS 26 Liquid Glass Top Bar
+            LiquidGlassSurface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = LiquidGlassTokens.ShapeMedium,
+                isDark = isDark,
+                elevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     if (onOpenDrawer != null) {
-                        IconButton(
+                        LiquidGlassIconButton(
                             onClick = onOpenDrawer,
-                            modifier = Modifier.testTag("open_drawer_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Open navigation drawer",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
+                            icon = Icons.Filled.Menu,
+                            contentDescription = "Open navigation menu",
+                            modifier = Modifier.testTag("open_drawer_button"),
+                            size = 40.dp
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
                     }
-                },
-                title = {
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Settings",
+                            style = TextStyle(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                            )
+                        )
+                        Text(
+                            text = "Liquid Glass Workspace Preferences",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
+                        )
+                    }
+
+                    LiquidGlassBadge(
+                        text = "v1.0.0",
+                        color = LiquidGlassTokens.AzureGlass,
+                        containerColor = LiquidGlassTokens.AzureGlassGlow
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
+                }
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -130,130 +140,163 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 104.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 104.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Appearance Section
-            SettingsSectionCard(
-                title = "Appearance",
-                subtitle = "Choose light, dark, or system matching theme",
-                icon = Icons.Filled.Brightness4
+            // 1. Appearance Section (Theme mode & Dark Mode toggle)
+            LiquidGlassSettingsCard(
+                title = "Appearance & Visuals",
+                subtitle = "Choose theme mode or toggle dark glass theme",
+                icon = Icons.Filled.Brightness4,
+                isDark = isDark
             ) {
                 Text(
-                    text = "Theme Mode",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "Theme Palette Mode",
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                    )
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
+                // Liquid Glass Segmented Control
+                val themeOptions = listOf("System", "Light", "Dark")
+                val currentThemeIndex = when (prefs.themeMode) {
+                    AppThemeMode.SYSTEM -> 0
+                    AppThemeMode.LIGHT -> 1
+                    AppThemeMode.DARK -> 2
+                }
+                LiquidGlassSegmentedControl(
+                    items = themeOptions,
+                    selectedIndex = currentThemeIndex,
+                    onSelectIndex = { index ->
+                        when (index) {
+                            0 -> viewModel.setTheme(AppThemeMode.SYSTEM)
+                            1 -> viewModel.setTheme(AppThemeMode.LIGHT)
+                            2 -> viewModel.setTheme(AppThemeMode.DARK)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = if (isDark) Color(0x1FFFFFFF) else Color(0x14000000))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Liquid Glass Sliding Toggle Switch (Image Template)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ThemeSelectTile(
-                        label = "System",
-                        selected = prefs.themeMode == AppThemeMode.SYSTEM,
-                        onClick = { viewModel.setTheme(AppThemeMode.SYSTEM) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    ThemeSelectTile(
-                        label = "Light",
-                        selected = prefs.themeMode == AppThemeMode.LIGHT,
-                        onClick = { viewModel.setTheme(AppThemeMode.LIGHT) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    ThemeSelectTile(
-                        label = "Dark",
-                        selected = prefs.themeMode == AppThemeMode.DARK,
-                        onClick = { viewModel.setTheme(AppThemeMode.DARK) },
-                        modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Dark Glass Theme",
+                            style = TextStyle(
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                            )
+                        )
+                        Text(
+                            text = "Deep translucent obsidian surfaces with specular rim glow",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    LiquidGlassToggleSwitch(
+                        checked = prefs.themeMode == AppThemeMode.DARK || (prefs.themeMode == AppThemeMode.SYSTEM && isDark),
+                        onCheckedChange = { isChecked ->
+                            viewModel.setTheme(if (isChecked) AppThemeMode.DARK else AppThemeMode.LIGHT)
+                        }
                     )
                 }
             }
 
-            // 2. Workspace Preferences
-            SettingsSectionCard(
+            // 2. Workspace Display Section
+            LiquidGlassSettingsCard(
                 title = "Workspace Display",
-                subtitle = "Configure file listing and default order",
-                icon = Icons.Filled.Tune
+                subtitle = "Configure file listing layout and default sort order",
+                icon = Icons.Filled.Tune,
+                isDark = isDark
             ) {
-                Text(
-                    text = "Default View Mode",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // View Mode Toggle Switch (Image Template)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ThemeSelectTile(
-                        label = "List View",
-                        selected = prefs.viewMode == FileViewMode.LIST,
-                        onClick = { viewModel.setViewMode(FileViewMode.LIST) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    ThemeSelectTile(
-                        label = "Grid View",
-                        selected = prefs.viewMode == FileViewMode.GRID,
-                        onClick = { viewModel.setViewMode(FileViewMode.GRID) },
-                        modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Grid Layout Mode",
+                            style = TextStyle(
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                            )
+                        )
+                        Text(
+                            text = if (prefs.viewMode == FileViewMode.GRID) "2-column visual grid cards" else "Compact structured list rows",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    LiquidGlassToggleSwitch(
+                        checked = prefs.viewMode == FileViewMode.GRID,
+                        onCheckedChange = { isChecked ->
+                            viewModel.setViewMode(if (isChecked) FileViewMode.GRID else FileViewMode.LIST)
+                        }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = if (isDark) Color(0x1FFFFFFF) else Color(0x14000000))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "Default Sort Order",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "Default File Sort Order",
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                    )
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Sort Order Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     FileSortOrder.entries.forEach { sort ->
                         val isSelected = prefs.sortOrder == sort
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(SleekShapes.input)
-                                .clickable { viewModel.setSortOrder(sort) }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clip(CircleShape)
-                                    .border(
-                                        width = if (isSelected) 6.dp else 1.5.dp,
-                                        color = if (isSelected) AccentBlue else MaterialTheme.colorScheme.outline,
-                                        shape = CircleShape
-                                    )
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = sort.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (isSelected) AccentBlue else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                        LiquidGlassFilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.setSortOrder(sort) },
+                            label = sort.title,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
 
-            // 3. Storage & History
-            SettingsSectionCard(
-                title = "Document History",
-                subtitle = "Manage your cached recent document records",
-                icon = Icons.Filled.History
+            // 3. Storage & History Section
+            LiquidGlassSettingsCard(
+                title = "Document History & Cache",
+                subtitle = "Manage cached recent documents without affecting storage",
+                icon = Icons.Filled.History,
+                isDark = isDark
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -263,15 +306,19 @@ fun SettingsScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Clear Recent History",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            style = TextStyle(
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                            )
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Clear document list cache without deleting original files",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "Purge recent document records; actual device files remain safe",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
                         )
                     }
 
@@ -288,77 +335,100 @@ fun SettingsScreen(
                 }
             }
 
-            // 4. Privacy & Architecture
-            SettingsSectionCard(
-                title = "Privacy & Local Guarantee",
-                subtitle = "Strictly on-device storage with zero external tracking",
-                icon = Icons.Filled.Shield
+            // 4. Privacy & Local Architecture
+            LiquidGlassSettingsCard(
+                title = "Privacy & Security Guarantee",
+                subtitle = "Strictly on-device processing via Android Storage Access Framework",
+                icon = Icons.Filled.Shield,
+                isDark = isDark
             ) {
-                Text(
-                    text = "• 100% On-Device: All document rendering, parsing, and notes are processed locally.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "• No Cloud Sync: Documents never leave your device storage.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "• Storage Access Framework: Granular read/write permissions via Android SAF.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(LiquidGlassTokens.EmeraldGlass)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "100% On-Device: Parsing, editing, and rendering run locally.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(LiquidGlassTokens.AzureGlass)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Storage Access Framework: Granular file and folder access permissions.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(LiquidGlassTokens.AmberGlass)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Zero Telemetry: No background document telemetry or cloud uploads.",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                            )
+                        )
+                    }
+                }
             }
 
             // 5. About NotOffice563
-            SettingsSectionCard(
+            LiquidGlassSettingsCard(
                 title = "About NotOffice563",
-                subtitle = "Independent Android document workspace",
-                icon = Icons.Filled.Info
+                subtitle = "Next-generation iOS 26 Liquid Glass document suite",
+                icon = Icons.Filled.Info,
+                isDark = isDark
             ) {
                 Text(
-                    text = "NotOffice563 v1.0.0",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    text = "NotOffice563 Document Workspace",
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = LiquidGlassTokens.AzureGlass
+                    )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Designed with a clean, restrained Material 3 language for a focused document workspace.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "An independent open document workspace. Not affiliated with Microsoft Corporation.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "A modern mobile office suite crafted with pure Kotlin and Jetpack Compose. Combines real OpenXML (DOCX, XLSX, PPTX) and native PdfRenderer capabilities with an authentic iOS 26 Liquid Glass aesthetic.",
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary,
+                        lineHeight = 18.sp
+                    )
                 )
             }
         }
     }
 
     if (showClearConfirmDialog) {
-        AlertDialog(
+        LiquidGlassDialog(
             onDismissRequest = { showClearConfirmDialog = false },
-            shape = SleekShapes.dialog,
-            title = {
-                Text(
-                    text = "Clear Recent History?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "Are you sure you want to clear your document history? Original files on device storage will remain untouched.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
+            title = "Clear Recent History?",
+            isDark = isDark,
             confirmButton = {
                 LiquidGlassButton(
                     text = "Clear",
@@ -367,116 +437,93 @@ fun SettingsScreen(
                         viewModel.clearRecentFiles()
                     },
                     accentColor = LiquidGlassTokens.CrimsonGlass,
-                    isPrimary = true
+                    isPrimary = true,
+                    height = 38.dp
                 )
             },
             dismissButton = {
                 LiquidGlassButton(
                     text = "Cancel",
                     onClick = { showClearConfirmDialog = false },
-                    isPrimary = false
+                    isPrimary = false,
+                    height = 38.dp
                 )
             }
-        )
-    }
-}
-
-/**
- * Reusable Section Card for settings:
- * 16dp rounded card with 1dp border, circular tinted icon, bold title and clean content.
- */
-@Composable
-private fun SettingsSectionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    content: @Composable () -> Unit
-) {
-    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-
-    Card(
-        shape = SleekShapes.cardLarge,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Circular icon container
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(AccentBlue.copy(alpha = if (isDark) 0.2f else 0.1f))
-                        .border(1.dp, AccentBlue.copy(alpha = 0.25f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = AccentBlue,
-                        modifier = Modifier.size(SleekSizes.iconSmall)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
-            Spacer(modifier = Modifier.height(14.dp))
-
-            content()
+        ) {
+            Text(
+                text = "Are you sure you want to clear your document history? Original files on device storage will remain untouched.",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                )
+            )
         }
     }
 }
 
 /**
- * Sleek tile for selecting mode (System, Light, Dark, List, Grid).
+ * Reusable Liquid Glass Section Card for settings.
  */
 @Composable
-private fun ThemeSelectTile(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun LiquidGlassSettingsCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    isDark: Boolean,
+    content: @Composable () -> Unit
 ) {
-    val containerBg = if (selected) AccentBlueContainer else MaterialTheme.colorScheme.surface
-    val borderStroke = if (selected) {
-        BorderStroke(1.5.dp, AccentBlue)
-    } else {
-        BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-    }
-
-    Surface(
-        onClick = onClick,
-        shape = SleekShapes.input,
-        color = containerBg,
-        border = borderStroke,
-        modifier = modifier.height(SleekSizes.buttonSmall)
+    LiquidGlassSurface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = LiquidGlassTokens.ShapeLarge,
+        isDark = isDark,
+        elevation = 3.dp
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                color = if (selected) OnAccentBlueContainer else MaterialTheme.colorScheme.onSurface
-            )
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Circular icon lens
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isDark) Color(0x33007AFF) else Color(0x1F007AFF)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = LiquidGlassTokens.AzureGlass,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
+                    Text(
+                        text = title,
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                        )
+                    )
+                    Text(
+                        text = subtitle,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = if (isDark) Color(0x1FFFFFFF) else Color(0x14000000))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            content()
         }
     }
 }

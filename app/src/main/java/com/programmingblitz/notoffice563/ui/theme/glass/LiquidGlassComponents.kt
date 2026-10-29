@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import com.programmingblitz.notoffice563.ui.theme.motion.MotionTokens
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -470,17 +472,12 @@ fun LiquidGlassTextField(
             }
 
             if (value.isNotEmpty() && onClear != null) {
-                IconButton(
+                LiquidGlassIconButton(
                     onClick = onClear,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Clear text",
-                        tint = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                    icon = Icons.Filled.Close,
+                    contentDescription = "Clear text",
+                    size = 28.dp
+                )
             }
         }
     }
@@ -914,5 +911,408 @@ fun LiquidGlassFilterChip(
         }
     }
 }
+
+/**
+ * iOS 26 Liquid Glass Sliding Toggle Switch.
+ * Matches image_28547c8a.png:
+ * Frosted pill track displaying "OFF" on left and "ON" on right.
+ * A 3D convex white/frosted glass pill knob smoothly glides across with spring physics.
+ * Displays "ON" in bold black on top of the knob when checked, or "OFF" when unchecked.
+ */
+@Composable
+fun LiquidGlassToggleSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    val haptic = LocalHapticFeedback.current
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    // Knob offset animation
+    val thumbOffsetFraction by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.75f,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "glassToggleThumb"
+    )
+
+    val trackWidth = 100.dp
+    val trackHeight = 40.dp
+    val thumbWidth = 52.dp
+    val thumbHeight = 34.dp
+
+    val trackShape = RoundedCornerShape(20.dp)
+    val thumbShape = RoundedCornerShape(17.dp)
+
+    val trackBg = if (isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF282E3A),
+                Color(0xFF1E232E)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFFE4E7ED),
+                Color(0xFFD6DBE4)
+            )
+        )
+    }
+
+    val trackBorder = Brush.verticalGradient(
+        colors = listOf(
+            if (isDark) Color(0x33FFFFFF) else Color(0x80FFFFFF),
+            if (isDark) Color(0x10FFFFFF) else Color(0x20000000)
+        )
+    )
+
+    Box(
+        modifier = modifier
+            .size(width = trackWidth, height = trackHeight)
+            .clip(trackShape)
+            .background(trackBg)
+            .border(1.dp, trackBorder, trackShape)
+            .clickable(enabled = enabled) {
+                HapticUtil.performSelection(haptic)
+                onCheckedChange(!checked)
+            }
+            .padding(horizontal = 3.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        // Background labels: "OFF" on left, "ON" on right
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "OFF",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color(0xFF6B7280) else Color(0xFF757B88)
+                )
+            )
+            Text(
+                text = "ON",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color(0xFF6B7280) else Color(0xFF757B88)
+                )
+            )
+        }
+
+        // Sliding Convex Knob: max travel = trackWidth - 6.dp padding - thumbWidth = 100 - 6 - 52 = 42.dp
+        val maxOffsetDp = trackWidth - 6.dp - thumbWidth
+        val thumbOffsetDp = maxOffsetDp * thumbOffsetFraction
+
+        Box(
+            modifier = Modifier
+                .padding(start = thumbOffsetDp)
+                .size(width = thumbWidth, height = thumbHeight)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = thumbShape,
+                    ambientColor = Color.Black.copy(alpha = 0.25f),
+                    spotColor = Color.Black.copy(alpha = 0.35f)
+                )
+                .clip(thumbShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFFFFF),
+                            Color(0xFFF1F3F7),
+                            Color(0xFFE2E6EE)
+                        )
+                    )
+                )
+                .border(
+                    width = 1.dp,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFFFFF),
+                            Color(0x80FFFFFF),
+                            Color(0x33B0B8C5)
+                        )
+                    ),
+                    shape = thumbShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = if (thumbOffsetFraction > 0.5f) "ON" else "OFF",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF0F141C),
+                    letterSpacing = 0.3.sp
+                )
+            )
+        }
+    }
+}
+
+/**
+ * iOS 26 Liquid Glass Segmented Pill Button.
+ * Matches image_95d167b2.png and image_c7a46987.png:
+ * Dual-action capsule container with frosted glass, specular edge highlight,
+ * subtle middle divider, and tactile spring responsiveness on each half (< > or - +).
+ */
+@Composable
+fun LiquidGlassSegmentedPill(
+    leftIcon: ImageVector,
+    onLeftClick: () -> Unit,
+    rightIcon: ImageVector,
+    onRightClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leftContentDescription: String? = null,
+    rightContentDescription: String? = null,
+    enabled: Boolean = true,
+    width: Dp = 88.dp,
+    height: Dp = 38.dp
+) {
+    val haptic = LocalHapticFeedback.current
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    var leftPressed by remember { mutableStateOf(false) }
+    var rightPressed by remember { mutableStateOf(false) }
+
+    val leftScale by animateFloatAsState(
+        targetValue = if (leftPressed && enabled) 0.92f else 1f,
+        animationSpec = MotionTokens.SpecPressIn,
+        label = "pillLeftScale"
+    )
+    val rightScale by animateFloatAsState(
+        targetValue = if (rightPressed && enabled) 0.92f else 1f,
+        animationSpec = MotionTokens.SpecPressIn,
+        label = "pillRightScale"
+    )
+
+    val capsuleShape = LiquidGlassTokens.ShapeCapsule
+    val bgBrush = if (isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0x38FFFFFF),
+                Color(0x18FFFFFF)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xCCFFFFFF),
+                Color(0x99DCE6F5)
+            )
+        )
+    }
+
+    val borderBrush = Brush.verticalGradient(
+        colors = listOf(
+            if (isDark) Color(0x60FFFFFF) else Color(0xCCFFFFFF),
+            if (isDark) Color(0x1AFFFFFF) else Color(0x30002048)
+        )
+    )
+
+    val iconColor = if (isDark) Color.White else Color(0xFF0F172A)
+
+    Box(
+        modifier = modifier
+            .size(width = width, height = height)
+            .shadow(
+                elevation = 2.dp,
+                shape = capsuleShape,
+                ambientColor = Color.Black.copy(alpha = 0.15f)
+            )
+            .clip(capsuleShape)
+            .background(bgBrush)
+            .border(1.dp, borderBrush, capsuleShape)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left Half
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = leftScale
+                        scaleY = leftScale
+                    }
+                    .pointerInput(enabled) {
+                        detectTapGestures(
+                            onPress = {
+                                leftPressed = true
+                                tryAwaitRelease()
+                                leftPressed = false
+                            },
+                            onTap = {
+                                HapticUtil.performLightImpact(haptic)
+                                onLeftClick()
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = leftIcon,
+                    contentDescription = leftContentDescription,
+                    tint = if (enabled) iconColor else iconColor.copy(alpha = 0.4f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            // Translucent subtle vertical divider
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(if (isDark) Color(0x26FFFFFF) else Color(0x33000000))
+            )
+
+            // Right Half
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = rightScale
+                        scaleY = rightScale
+                    }
+                    .pointerInput(enabled) {
+                        detectTapGestures(
+                            onPress = {
+                                rightPressed = true
+                                tryAwaitRelease()
+                                rightPressed = false
+                            },
+                            onTap = {
+                                HapticUtil.performLightImpact(haptic)
+                                onRightClick()
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = rightIcon,
+                    contentDescription = rightContentDescription,
+                    tint = if (enabled) iconColor else iconColor.copy(alpha = 0.4f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * iOS 26 Liquid Glass Search Pill.
+ * Matches image_95d167b2.png:
+ * Translucent capsule with inner specular reflection, placeholder text,
+ * and circular search/clear icon buttons.
+ */
+@Composable
+fun LiquidGlassSearchPill(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "Search...",
+    onSearch: (() -> Unit)? = null,
+    onClear: (() -> Unit)? = null
+) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    val shape = LiquidGlassTokens.ShapeCapsule
+    val bgBrush = if (isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0x331C2436),
+                Color(0x22121724)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xEEFFFFFF),
+                Color(0xCCE8EFF9)
+            )
+        )
+    }
+
+    val borderBrush = Brush.verticalGradient(
+        colors = listOf(
+            if (isDark) Color(0x55FFFFFF) else Color(0xE6FFFFFF),
+            if (isDark) Color(0x18FFFFFF) else Color(0x28002048)
+        )
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .shadow(2.dp, shape, ambientColor = Color.Black.copy(alpha = 0.12f))
+            .clip(shape)
+            .background(bgBrush)
+            .border(1.dp, borderBrush, shape)
+            .padding(start = 18.dp, end = 6.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = TextStyle(
+                            fontSize = 15.sp,
+                            color = if (isDark) LiquidGlassTokens.DarkTextTertiary else LiquidGlassTokens.LightTextTertiary
+                        )
+                    )
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
+                    ),
+                    cursorBrush = SolidColor(LiquidGlassTokens.AzureGlass),
+                    keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { onSearch?.invoke() }),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (value.isNotEmpty() && onClear != null) {
+                LiquidGlassIconButton(
+                    onClick = onClear,
+                    icon = Icons.Filled.Close,
+                    contentDescription = "Clear search",
+                    size = 32.dp
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            LiquidGlassIconButton(
+                onClick = { onSearch?.invoke() },
+                icon = Icons.Filled.Search,
+                contentDescription = "Search",
+                size = 36.dp
+            )
+        }
+    }
+}
+
 
 

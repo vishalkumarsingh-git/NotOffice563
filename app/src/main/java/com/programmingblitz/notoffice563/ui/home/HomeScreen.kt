@@ -373,16 +373,12 @@ fun HomeScreen(
                         )
                     )
                     if (uiState.recentFiles.isNotEmpty()) {
-                        TextButton(onClick = onNavigateToRecent) {
-                            Text(
-                                text = "See all",
-                                style = TextStyle(
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = AccentBlue
-                                )
-                            )
-                        }
+                        LiquidGlassButton(
+                            text = "See all",
+                            onClick = onNavigateToRecent,
+                            isPrimary = false,
+                            height = 30.dp
+                        )
                     }
                 }
             }

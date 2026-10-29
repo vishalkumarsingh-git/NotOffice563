@@ -34,14 +34,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFilterChip
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFloatingActionButton
@@ -211,39 +205,14 @@ fun FilesScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search Input
-            OutlinedTextField(
+            // Search Input with Liquid Glass Search Pill
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSearchPill(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.onSearchQueryChanged(it) },
-                placeholder = { Text("Search files by name or format...", style = MaterialTheme.typography.bodyMedium) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotEmpty()) {
-                        LiquidGlassIconButton(
-                            onClick = { viewModel.onSearchQueryChanged("") },
-                            icon = Icons.Filled.Clear,
-                            contentDescription = "Clear search",
-                            size = 32.dp
-                        )
-                    }
-                },
-                singleLine = true,
-                shape = SleekShapes.input,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
+                placeholder = "Search files by name or format...",
+                onClear = { viewModel.onSearchQueryChanged("") },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
                     .testTag("files_search_input")
             )
 

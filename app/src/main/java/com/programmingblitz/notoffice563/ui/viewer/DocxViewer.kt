@@ -76,11 +76,14 @@ import com.programmingblitz.notoffice563.domain.model.DocxAlignment
 import com.programmingblitz.notoffice563.domain.model.DocxParagraph
 import com.programmingblitz.notoffice563.domain.model.DocxRun
 import com.programmingblitz.notoffice563.ui.theme.WordDocBlue
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFloatingToolbar
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSegmentedPill
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTextField
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
@@ -491,13 +494,16 @@ fun DocxViewer(
                 contentAlignment = Alignment.Center
             ) {
                 LiquidGlassFloatingToolbar(isDark = isDark) {
-                    // Font Size controls
-                    LiquidGlassIconButton(
-                        onClick = { fontSizeSp = (fontSizeSp - 2f).coerceAtLeast(12f) },
-                        icon = Icons.Filled.FormatSize,
-                        contentDescription = "Decrease text size",
-                        enabled = fontSizeSp > 12f,
-                        size = 36.dp
+                    // Font Size controls with - + Liquid Glass Segmented Pill (image_c7a46987.png)
+                    LiquidGlassSegmentedPill(
+                        leftIcon = Icons.Filled.Remove,
+                        rightIcon = Icons.Filled.Add,
+                        leftContentDescription = "Decrease font size",
+                        rightContentDescription = "Increase font size",
+                        onLeftClick = { fontSizeSp = (fontSizeSp - 2f).coerceAtLeast(12f) },
+                        onRightClick = { fontSizeSp = (fontSizeSp + 2f).coerceAtMost(28f) },
+                        width = 86.dp,
+                        height = 36.dp
                     )
                     Text(
                         text = "${fontSizeSp.toInt()}pt",
@@ -506,14 +512,7 @@ fun DocxViewer(
                             fontWeight = FontWeight.Bold,
                             color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
                         ),
-                        modifier = Modifier.padding(horizontal = 4.dp)
-                    )
-                    LiquidGlassIconButton(
-                        onClick = { fontSizeSp = (fontSizeSp + 2f).coerceAtMost(28f) },
-                        icon = Icons.Filled.FormatSize,
-                        contentDescription = "Increase text size",
-                        enabled = fontSizeSp < 28f,
-                        size = 36.dp
+                        modifier = Modifier.padding(horizontal = 6.dp)
                     )
 
                     Spacer(modifier = Modifier.width(6.dp))

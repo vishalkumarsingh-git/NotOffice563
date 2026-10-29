@@ -17,13 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -118,16 +115,16 @@ fun LegacyFallbackViewer(
         Spacer(modifier = Modifier.height(28.dp))
 
         // Action Buttons
-        Button(
+        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+            text = "Open with another app",
             onClick = onOpenWithAnotherApp,
+            icon = Icons.Filled.OpenInBrowser,
+            isPrimary = true,
+            height = 44.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("legacy_open_with_button")
-        ) {
-            Icon(Icons.Filled.OpenInBrowser, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Open with another app")
-        }
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -135,23 +132,23 @@ fun LegacyFallbackViewer(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            FilledTonalButton(
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                text = "Share",
                 onClick = onShare,
+                icon = Icons.Filled.Share,
+                isPrimary = false,
+                height = 40.dp,
                 modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Share")
-            }
+            )
 
-            OutlinedButton(
+            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                text = "File Info",
                 onClick = onShowFileInfo,
+                icon = Icons.Filled.Info,
+                isPrimary = false,
+                height = 40.dp,
                 modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.Filled.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("File Info")
-            }
+            )
         }
     }
 }

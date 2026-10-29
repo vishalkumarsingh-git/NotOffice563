@@ -12,21 +12,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -171,23 +169,9 @@ fun RecentScreen(
     }
 
     if (showClearConfirmDialog) {
-        AlertDialog(
+        LiquidGlassDialog(
             onDismissRequest = { showClearConfirmDialog = false },
-            shape = SleekShapes.dialog,
-            title = {
-                Text(
-                    text = "Clear Recent Documents?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = "This will clear your recent document history in NotOffice563. Your original files on device storage will remain untouched.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
+            title = "Clear Recent Documents?",
             confirmButton = {
                 LiquidGlassButton(
                     text = "Clear History",
@@ -196,17 +180,27 @@ fun RecentScreen(
                         viewModel.clearAllRecent()
                     },
                     accentColor = LiquidGlassTokens.CrimsonGlass,
-                    isPrimary = true
+                    isPrimary = true,
+                    height = 38.dp
                 )
             },
             dismissButton = {
                 LiquidGlassButton(
                     text = "Cancel",
                     onClick = { showClearConfirmDialog = false },
-                    isPrimary = false
+                    isPrimary = false,
+                    height = 38.dp
                 )
             }
-        )
+        ) {
+            Text(
+                text = "This will clear your recent document history in NotOffice563. Your original files on device storage will remain untouched.",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+        }
     }
 
     // File details bottom sheet

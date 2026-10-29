@@ -32,7 +32,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -228,35 +228,27 @@ fun DocumentListItem(
             Spacer(modifier = Modifier.width(6.dp))
 
             // Favorite button
-            IconButton(
+            LiquidGlassIconButton(
                 onClick = onFavoriteToggle,
-                modifier = Modifier
-                    .size(SleekSizes.buttonSmall)
-                    .testTag("favorite_button_${file.uri.hashCode()}")
-            ) {
-                Icon(
-                    imageVector = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-                    contentDescription = if (file.isFavorite) "Remove from favorites" else "Add to favorites",
-                    tint = if (file.isFavorite) PptPresentationAmber else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(SleekSizes.iconMedium)
-                )
-            }
+                icon = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                contentDescription = if (file.isFavorite) "Remove from favorites" else "Add to favorites",
+                isActive = file.isFavorite,
+                activeColor = PptPresentationAmber,
+                size = 32.dp,
+                modifier = Modifier.testTag("favorite_button_${file.uri.hashCode()}")
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
 
             // Context Menu
             Box {
-                IconButton(
+                LiquidGlassIconButton(
                     onClick = { showMenu = true },
-                    modifier = Modifier
-                        .size(SleekSizes.buttonSmall)
-                        .testTag("more_button_${file.uri.hashCode()}")
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "More actions",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(SleekSizes.iconMedium)
-                    )
-                }
+                    icon = Icons.Filled.MoreVert,
+                    contentDescription = "More actions",
+                    size = 32.dp,
+                    modifier = Modifier.testTag("more_button_${file.uri.hashCode()}")
+                )
 
                 DropdownMenu(
                     expanded = showMenu,
@@ -349,17 +341,14 @@ fun DocumentGridItem(
                     )
                 }
 
-                IconButton(
+                LiquidGlassIconButton(
                     onClick = onFavoriteToggle,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-                        contentDescription = "Favorite",
-                        tint = if (file.isFavorite) PptPresentationAmber else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                    icon = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = "Favorite",
+                    isActive = file.isFavorite,
+                    activeColor = PptPresentationAmber,
+                    size = 28.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))

@@ -315,8 +315,15 @@ fun XlsxViewer(
                                             .padding(horizontal = 8.dp),
                                         contentAlignment = Alignment.CenterStart
                                     ) {
+                                        val rawVal = if (isSelected && formulaInput != state.selectedCellValue) formulaInput else cellVal
+                                        val displayVal = if (rawVal.startsWith("=")) {
+                                            com.programmingblitz.notoffice563.document.evaluator.SpreadsheetFormulaEvaluator.evaluate(rawVal, currentSheet.rows)
+                                        } else {
+                                            rawVal
+                                        }
+
                                         Text(
-                                            text = if (isSelected && formulaInput != state.selectedCellValue) formulaInput else cellVal,
+                                            text = displayVal,
                                             style = TextStyle(
                                                 fontSize = 12.sp,
                                                 color = if (isSelected) ExcelSheetGreen else cellText,

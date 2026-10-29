@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -58,6 +57,7 @@ import com.programmingblitz.notoffice563.document.generator.PptxGenerator
 import com.programmingblitz.notoffice563.document.generator.XlsxGenerator
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSegmentedControl
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTextField
@@ -152,16 +152,12 @@ fun CreateDocumentBottomSheet(
                     )
                 }
 
-                IconButton(
+                LiquidGlassIconButton(
                     onClick = onDismiss,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
-                    )
-                }
+                    icon = Icons.Filled.Close,
+                    contentDescription = "Close",
+                    size = 32.dp
+                )
             }
 
             Spacer(modifier = Modifier.height(18.dp))

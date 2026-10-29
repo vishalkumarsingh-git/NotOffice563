@@ -22,21 +22,19 @@ import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -133,40 +131,33 @@ fun FileInfoBottomSheet(
                     )
                 }
 
-                IconButton(
+                LiquidGlassIconButton(
                     onClick = { onToggleFavorite(file) },
-                    modifier = Modifier.size(SleekSizes.buttonSmall)
-                ) {
-                    Icon(
-                        imageVector = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-                        contentDescription = "Toggle favorite",
-                        tint = if (file.isFavorite) PptPresentationAmber else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    icon = if (file.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                    contentDescription = "Toggle favorite",
+                    isActive = file.isFavorite,
+                    activeColor = PptPresentationAmber,
+                    size = 36.dp
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Primary action button: Open
-            Button(
+            LiquidGlassButton(
+                text = "Open Document",
+                icon = Icons.AutoMirrored.Filled.OpenInNew,
                 onClick = {
                     onDismiss()
                     onOpen(file)
                 },
-                shape = SleekShapes.card,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentBlue,
-                    contentColor = Color.White
-                ),
+                isPrimary = true,
+                accentColor = LiquidGlassTokens.AzureGlass,
+                height = 46.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(SleekSizes.buttonSmall)
                     .testTag("open_file_action_button")
-            ) {
-                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Open Document", fontWeight = FontWeight.SemiBold)
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
@@ -207,24 +198,22 @@ fun FileInfoBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilledTonalButton(
+                LiquidGlassButton(
+                    text = "Share",
+                    icon = Icons.Filled.Share,
                     onClick = { onShare(file) },
-                    shape = SleekShapes.chip,
+                    isPrimary = false,
+                    height = 40.dp,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Share", fontSize = 12.sp)
-                }
-                FilledTonalButton(
+                )
+                LiquidGlassButton(
+                    text = "Open with",
+                    icon = Icons.Filled.OpenInBrowser,
                     onClick = { onOpenWith(file) },
-                    shape = SleekShapes.chip,
+                    isPrimary = false,
+                    height = 40.dp,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Open with", fontSize = 12.sp)
-                }
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -233,124 +222,118 @@ fun FileInfoBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
+                LiquidGlassButton(
+                    text = "Rename",
+                    icon = Icons.Filled.DriveFileRenameOutline,
                     onClick = { showRenameDialog = true },
-                    shape = SleekShapes.chip,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    isPrimary = false,
+                    height = 40.dp,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.DriveFileRenameOutline, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Rename", fontSize = 12.sp)
-                }
+                )
 
-                OutlinedButton(
+                LiquidGlassButton(
+                    text = "Remove Recent",
                     onClick = {
                         onDismiss()
                         onRemoveRecent(file)
                     },
-                    shape = SleekShapes.chip,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    isPrimary = false,
+                    height = 40.dp,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text("Remove Recent", fontSize = 12.sp)
-                }
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
+            LiquidGlassButton(
+                text = "Delete from Device Storage",
+                icon = Icons.Filled.Delete,
                 onClick = { showDeleteConfirmDialog = true },
-                shape = SleekShapes.chip,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ExpenseRed.copy(alpha = 0.12f),
-                    contentColor = ExpenseRed
-                ),
-                border = BorderStroke(1.dp, ExpenseRed.copy(alpha = 0.3f)),
+                accentColor = LiquidGlassTokens.CrimsonGlass,
+                isPrimary = true,
+                height = 42.dp,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Delete from Device Storage", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            }
+            )
         }
     }
 
     if (showRenameDialog) {
-        AlertDialog(
+        LiquidGlassDialog(
             onDismissRequest = { showRenameDialog = false },
-            shape = SleekShapes.dialog,
-            title = { Text("Rename Document", fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    Text(
-                        text = "Enter a new display name for this file:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = renameInput,
-                        onValueChange = { renameInput = it },
-                        singleLine = true,
-                        shape = SleekShapes.input,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
+            title = "Rename Document",
             confirmButton = {
-                Button(
+                LiquidGlassButton(
+                    text = "Save",
                     onClick = {
                         if (renameInput.isNotBlank()) {
                             onRename(file, renameInput.trim())
                             showRenameDialog = false
                         }
                     },
-                    shape = SleekShapes.card,
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
-                ) {
-                    Text("Save")
-                }
+                    accentColor = LiquidGlassTokens.AzureGlass,
+                    isPrimary = true,
+                    height = 38.dp
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) {
-                    Text("Cancel")
-                }
+                LiquidGlassButton(
+                    text = "Cancel",
+                    onClick = { showRenameDialog = false },
+                    isPrimary = false,
+                    height = 38.dp
+                )
             }
-        )
-    }
-
-    if (showDeleteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            shape = SleekShapes.dialog,
-            title = { Text("Delete File from Device?", fontWeight = FontWeight.Bold) },
-            text = {
+        ) {
+            Column {
                 Text(
-                    text = "Are you sure you want to delete '${file.displayName}' permanently from your device? This cannot be undone.",
+                    text = "Enter a new display name for this file:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            },
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = renameInput,
+                    onValueChange = { renameInput = it },
+                    singleLine = true,
+                    shape = SleekShapes.input,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+
+    if (showDeleteConfirmDialog) {
+        LiquidGlassDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = "Delete File from Device?",
             confirmButton = {
-                Button(
+                LiquidGlassButton(
+                    text = "Delete Permanently",
                     onClick = {
                         showDeleteConfirmDialog = false
                         onDismiss()
                         onDelete(file)
                     },
-                    shape = SleekShapes.card,
-                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
-                ) {
-                    Text("Delete Permanently")
-                }
+                    accentColor = LiquidGlassTokens.CrimsonGlass,
+                    isPrimary = true,
+                    height = 38.dp
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
-                }
+                LiquidGlassButton(
+                    text = "Cancel",
+                    onClick = { showDeleteConfirmDialog = false },
+                    isPrimary = false,
+                    height = 38.dp
+                )
             }
-        )
+        ) {
+            Text(
+                text = "Are you sure you want to delete '${file.displayName}' permanently from your device? This cannot be undone.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

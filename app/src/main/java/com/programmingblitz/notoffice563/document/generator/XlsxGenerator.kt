@@ -155,9 +155,14 @@ $sheetsXml
                         if (cellVal.isEmpty()) continue
                         val colLetter = getColumnLetter(colIndex)
                         val cellRef = "$colLetter$rNum"
+                        val isFormula = cellVal.startsWith("=")
                         val isNumber = cellVal.toDoubleOrNull() != null && !isHeader
 
-                        if (isNumber) {
+                        if (isFormula) {
+                            val formulaBody = cellVal.substring(1)
+                            val calculated = com.programmingblitz.notoffice563.document.evaluator.SpreadsheetFormulaEvaluator.evaluate(cellVal, sheet.rows)
+                            sheetBuilder.append("            <c r=\"$cellRef\"$styleAttr><f>${escapeXml(formulaBody)}</f><v>${escapeXml(calculated)}</v></c>\n")
+                        } else if (isNumber) {
                             sheetBuilder.append("            <c r=\"$cellRef\"$styleAttr><v>$cellVal</v></c>\n")
                         } else {
                             sheetBuilder.append("            <c r=\"$cellRef\" t=\"inlineStr\"$styleAttr><is><t>${escapeXml(cellVal)}</t></is></c>\n")
@@ -275,9 +280,14 @@ $sheetsXml
                 for ((colIndex, cellVal) in row.withIndex()) {
                     val colLetter = getColumnLetter(colIndex)
                     val cellRef = "$colLetter$rNum"
+                    val isFormula = cellVal.startsWith("=")
                     val isNumber = cellVal.toDoubleOrNull() != null && !isHeader
 
-                    if (isNumber) {
+                    if (isFormula) {
+                        val formulaBody = cellVal.substring(1)
+                        val calculated = com.programmingblitz.notoffice563.document.evaluator.SpreadsheetFormulaEvaluator.evaluate(cellVal, rows)
+                        sheetBuilder.append("            <c r=\"$cellRef\"$styleAttr><f>${escapeXml(formulaBody)}</f><v>${escapeXml(calculated)}</v></c>\n")
+                    } else if (isNumber) {
                         sheetBuilder.append("            <c r=\"$cellRef\"$styleAttr><v>$cellVal</v></c>\n")
                     } else {
                         sheetBuilder.append("            <c r=\"$cellRef\" t=\"inlineStr\"$styleAttr><is><t>${escapeXml(cellVal)}</t></is></c>\n")

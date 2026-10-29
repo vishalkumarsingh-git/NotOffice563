@@ -43,6 +43,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSegmentedPill
 import com.programmingblitz.notoffice563.ui.theme.PptPresentationAmber
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface
@@ -96,6 +102,25 @@ fun PptxViewer(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (state.parsedPresentation.slides.size > 1) {
+                        LiquidGlassSegmentedPill(
+                            leftIcon = Icons.AutoMirrored.Filled.ArrowBack,
+                            rightIcon = Icons.AutoMirrored.Filled.ArrowForward,
+                            leftContentDescription = "Previous Slide",
+                            rightContentDescription = "Next Slide",
+                            onLeftClick = {
+                                if (state.currentSlideIndex > 0) onSlideSelect(state.currentSlideIndex - 1)
+                            },
+                            onRightClick = {
+                                if (state.currentSlideIndex < state.parsedPresentation.slides.size - 1) onSlideSelect(state.currentSlideIndex + 1)
+                            },
+                            enabled = true,
+                            width = 82.dp,
+                            height = 32.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
                     if (onSaveOriginal != null) {
                         com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
                             text = "Save",
@@ -289,14 +314,28 @@ fun PptxViewer(
                         )
                     )
 
-                    if (onAddSlide != null) {
-                        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
-                            text = "+ Slide",
-                            onClick = onAddSlide,
-                            accentColor = PptPresentationAmber,
-                            height = 28.dp,
-                            modifier = Modifier.testTag("pptx_add_slide_button")
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        if (onDeleteSlide != null && state.parsedPresentation.slides.size > 1) {
+                            LiquidGlassIconButton(
+                                onClick = { onDeleteSlide(state.currentSlideIndex) },
+                                icon = Icons.Filled.Delete,
+                                contentDescription = "Delete current slide",
+                                size = 30.dp,
+                                modifier = Modifier.testTag("pptx_delete_slide_button")
+                            )
+                        }
+                        if (onAddSlide != null) {
+                            LiquidGlassIconButton(
+                                onClick = onAddSlide,
+                                icon = Icons.Filled.Add,
+                                contentDescription = "Add new slide",
+                                size = 30.dp,
+                                modifier = Modifier.testTag("pptx_add_slide_button")
+                            )
+                        }
                     }
                 }
 

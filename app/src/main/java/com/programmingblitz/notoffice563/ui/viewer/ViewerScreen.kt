@@ -20,20 +20,16 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -303,7 +299,8 @@ fun ViewerScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         if (state.canOpenExternally && fileMetadata != null) {
-                            Button(
+                            com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                                text = "Open with another app",
                                 onClick = {
                                     val meta = fileMetadata!!
                                     SafHelper.openWithAnotherApp(
@@ -312,23 +309,22 @@ fun ViewerScreen(
                                         mimeType = meta.mimeType
                                     )
                                 },
+                                icon = Icons.Filled.OpenInBrowser,
+                                isPrimary = true,
+                                height = 44.dp,
                                 modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Filled.OpenInBrowser, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Open with another app")
-                            }
+                            )
                             Spacer(modifier = Modifier.height(12.dp))
                         }
 
-                        OutlinedButton(
+                        com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton(
+                            text = "Retry",
                             onClick = { viewModel.loadDocument(context) },
+                            icon = Icons.Filled.Refresh,
+                            isPrimary = false,
+                            height = 44.dp,
                             modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Retry")
-                        }
+                        )
                     }
                 }
             }

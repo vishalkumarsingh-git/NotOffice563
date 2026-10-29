@@ -111,8 +111,10 @@ object XlsxParser {
                 var currentCellRef = ""
                 var cellType = ""
                 var cellValue = ""
+                var formulaText = ""
                 var inValue = false
                 var inInlineT = false
+                var inFormula = false
 
                 while (eventType != XmlPullParser.END_DOCUMENT) {
                     when (eventType) {
@@ -127,13 +129,17 @@ object XlsxParser {
                                     currentCellRef = parser.getAttributeValue(null, "r") ?: ""
                                     cellType = parser.getAttributeValue(null, "t") ?: ""
                                     cellValue = ""
+                                    formulaText = ""
                                 }
                                 "v" -> inValue = true
                                 "t" -> if (cellType == "inlineStr") inInlineT = true
+                                "f" -> inFormula = true
                             }
                         }
                         XmlPullParser.TEXT -> {
-                            if (inValue) {
+                            if (inFormula) {
+                                formulaText += parser.text
+                            } else if (inValue) {
                                 cellValue += parser.text
                             } else if (inInlineT) {
                                 cellValue += parser.text
@@ -143,6 +149,7 @@ object XlsxParser {
                             when (parser.name) {
                                 "v" -> inValue = false
                                 "t" -> inInlineT = false
+                                "f" -> inFormula = false
                                 "c" -> {
                                     val colIdx = if (currentCellRef.isNotEmpty()) {
                                         columnLetterToIndex(currentCellRef.filter { it.isLetter() })
@@ -150,14 +157,15 @@ object XlsxParser {
 
                                     if (colIdx > maxCol) maxCol = colIdx
 
-                                    val resolvedText = when (cellType) {
-                                        "s" -> {
+                                    val resolvedText = when {
+                                        formulaText.isNotBlank() -> "=${formulaText.trim()}"
+                                        cellType == "s" -> {
                                             val sIndex = cellValue.trim().toIntOrNull()
                                             if (sIndex != null && sIndex in sharedStrings.indices) {
                                                 sharedStrings[sIndex]
                                             } else cellValue
                                         }
-                                        "b" -> if (cellValue == "1") "TRUE" else "FALSE"
+                                        cellType == "b" -> if (cellValue == "1") "TRUE" else "FALSE"
                                         else -> cellValue.trim()
                                     }
 
