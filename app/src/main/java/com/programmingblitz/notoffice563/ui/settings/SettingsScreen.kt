@@ -399,25 +399,45 @@ fun SettingsScreen(
             // 5. About NotOffice563
             LiquidGlassSettingsCard(
                 title = "About NotOffice563",
-                subtitle = "Next-generation iOS 26 Liquid Glass document suite",
+                subtitle = "Suite identity, developer credits & copyright",
                 icon = Icons.Filled.Info,
                 isDark = isDark
             ) {
                 Text(
-                    text = "NotOffice563 Document Workspace",
+                    text = "NotOffice563",
                     style = TextStyle(
-                        fontSize = 15.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = LiquidGlassTokens.AzureGlass
                     )
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "A modern mobile office suite crafted with pure Kotlin and Jetpack Compose. Combines real OpenXML (DOCX, XLSX, PPTX) and native PdfRenderer capabilities with an authentic iOS 26 Liquid Glass aesthetic.",
+                    text = "A modern office suite for documents, spreadsheets, presentations, and PDFs — built to make productivity simple.",
                     style = TextStyle(
                         fontSize = 13.sp,
                         color = if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary,
                         lineHeight = 18.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = if (isDark) Color(0x1FFFFFFF) else Color(0x14000000))
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Created by V. K. Singh",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isDark) LiquidGlassTokens.DarkTextSecondary else LiquidGlassTokens.LightTextSecondary
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "© 2026 Programming Blitz.",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = LiquidGlassTokens.AzureGlass
                     )
                 )
             }

@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val database = remember { AppDatabase.getInstance(context) }
-            val preferences = remember { AppPreferences(context) }
+            val preferences = remember { AppPreferences.getInstance(context) }
             val repository = remember {
                 DocumentRepository(
                     recentFileDao = database.recentFileDao(),

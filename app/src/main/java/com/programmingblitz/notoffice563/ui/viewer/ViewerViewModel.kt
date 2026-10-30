@@ -229,24 +229,89 @@ class ViewerViewModel(
                     )
                 }
 
-                DocumentType.WORD_DOC -> {
-                    _contentState.value = ViewerContentState.LegacyFallback(
-                        documentType = DocumentType.WORD_DOC,
-                        message = "This legacy Word format (.doc) cannot currently be rendered by NotOffice563."
+                DocumentType.WORD_DOC, DocumentType.RTF -> {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Cannot open legacy document stream")
+                    val parsed = com.programmingblitz.notoffice563.document.parser.DocParser.parse(
+                        inputStream,
+                        _fileMetadata.value?.displayName ?: "Document"
                     )
+                    _contentState.value = ViewerContentState.DocxContent(
+                        parsedDoc = parsed,
+                        editedTitle = parsed.title,
+                        editedContent = parsed.rawText,
+                        editedParagraphs = parsed.paragraphs,
+                        saveStatus = SaveStatus.SAVED,
+                        hasUnsavedChanges = false
+                    )
+                    loadNoteForTarget("doc:global")
+                }
+
+                DocumentType.TXT -> {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Cannot open text stream")
+                    val parsed = com.programmingblitz.notoffice563.document.parser.DocParser.parsePlainText(
+                        inputStream.readBytes(),
+                        _fileMetadata.value?.displayName ?: "Document"
+                    )
+                    _contentState.value = ViewerContentState.DocxContent(
+                        parsedDoc = parsed,
+                        editedTitle = parsed.title,
+                        editedContent = parsed.rawText,
+                        editedParagraphs = parsed.paragraphs,
+                        saveStatus = SaveStatus.SAVED,
+                        hasUnsavedChanges = false
+                    )
+                    loadNoteForTarget("doc:global")
                 }
 
                 DocumentType.EXCEL_XLS -> {
-                    _contentState.value = ViewerContentState.LegacyFallback(
-                        documentType = DocumentType.EXCEL_XLS,
-                        message = "This legacy Excel format (.xls) cannot currently be fully rendered by NotOffice563."
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Cannot open legacy spreadsheet stream")
+                    val parsed = com.programmingblitz.notoffice563.document.parser.XlsParser.parse(inputStream)
+                    var initialSheet = 0
+                    if (savedPosition != null && savedPosition.startsWith("sheet:")) {
+                        val sheetName = savedPosition.removePrefix("sheet:")
+                        val idx = parsed.sheets.indexOfFirst { it.name == sheetName }
+                        if (idx != -1) initialSheet = idx
+                    }
+                    _contentState.value = ViewerContentState.XlsxContent(
+                        parsedSpreadsheet = parsed,
+                        currentSheetIndex = initialSheet
+                    )
+                }
+
+                DocumentType.CSV -> {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Cannot open CSV stream")
+                    val parsed = com.programmingblitz.notoffice563.document.parser.XlsParser.parseCsv(inputStream, ",")
+                    _contentState.value = ViewerContentState.XlsxContent(
+                        parsedSpreadsheet = parsed,
+                        currentSheetIndex = 0
+                    )
+                }
+
+                DocumentType.TSV -> {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Cannot open TSV stream")
+                    val parsed = com.programmingblitz.notoffice563.document.parser.XlsParser.parseCsv(inputStream, "\t")
+                    _contentState.value = ViewerContentState.XlsxContent(
+                        parsedSpreadsheet = parsed,
+                        currentSheetIndex = 0
                     )
                 }
 
                 DocumentType.PPT_PPT -> {
-                    _contentState.value = ViewerContentState.LegacyFallback(
-                        documentType = DocumentType.PPT_PPT,
-                        message = "This legacy PowerPoint format (.ppt) cannot currently be fully rendered by NotOffice563."
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Cannot open legacy presentation stream")
+                    val parsed = com.programmingblitz.notoffice563.document.parser.PptParser.parse(inputStream)
+                    var initialSlide = 0
+                    if (savedPosition != null && savedPosition.startsWith("slide:")) {
+                        initialSlide = (savedPosition.removePrefix("slide:").toIntOrNull() ?: 0).coerceIn(0, (parsed.slides.size - 1).coerceAtLeast(0))
+                    }
+                    _contentState.value = ViewerContentState.PptxContent(
+                        parsedPresentation = parsed,
+                        currentSlideIndex = initialSlide
                     )
                 }
 

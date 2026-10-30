@@ -87,39 +87,52 @@ object DocumentFormatDetector {
             if (header[0] == 0xD0.toByte() && header[1] == 0xCF.toByte() &&
                 header[2] == 0x11.toByte() && header[3] == 0xE0.toByte()
             ) {
+                // Try inspecting stream names to confirm specific Office type
+                var detectedOleType: DocumentType? = null
+                try {
+                    val container = Ole2Container.parse(buffered)
+                    if (container.streams.containsKey("WordDocument")) {
+                        detectedOleType = DocumentType.WORD_DOC
+                    } else if (container.streams.containsKey("Workbook") || container.streams.containsKey("Book")) {
+                        detectedOleType = DocumentType.EXCEL_XLS
+                    } else if (container.streams.containsKey("PowerPoint Document")) {
+                        detectedOleType = DocumentType.PPT_PPT
+                    }
+                } catch (_: Exception) {
+                    // Ignored, fallback will be used
+                }
                 buffered.close()
-                return when (fallbackType) {
-                    DocumentType.WORD_DOC -> DocumentFormatValidation.LegacyFormat(
-                        DocumentType.WORD_DOC,
-                        "This legacy Word format cannot currently be fully rendered by NotOffice563."
-                    )
-                    DocumentType.EXCEL_XLS -> DocumentFormatValidation.LegacyFormat(
-                        DocumentType.EXCEL_XLS,
-                        "This legacy Excel format cannot currently be fully rendered by NotOffice563."
-                    )
-                    DocumentType.PPT_PPT -> DocumentFormatValidation.LegacyFormat(
-                        DocumentType.PPT_PPT,
-                        "This legacy PowerPoint format cannot currently be fully rendered by NotOffice563."
-                    )
-                    else -> DocumentFormatValidation.LegacyFormat(
+
+                val resolvedType = detectedOleType ?: when (fallbackType) {
+                    DocumentType.WORD_DOC -> DocumentType.WORD_DOC
+                    DocumentType.EXCEL_XLS -> DocumentType.EXCEL_XLS
+                    DocumentType.PPT_PPT -> DocumentType.PPT_PPT
+                    else -> fallbackType
+                }
+
+                return if (resolvedType != DocumentType.UNKNOWN) {
+                    DocumentFormatValidation.Valid(resolvedType)
+                } else {
+                    DocumentFormatValidation.LegacyFormat(
                         fallbackType,
-                        "This legacy Office format is supported via fallback viewer."
+                        "Legacy OLE2 document. NotOffice563 will attempt fallback parsing."
                     )
                 }
+            }
+
+            // 4. RTF (Rich Text Format): starts with {\rtf
+            if (header[0] == '{'.code.toByte() && header[1] == '\\'.code.toByte() &&
+                header[2] == 'r'.code.toByte() && header[3] == 't'.code.toByte()
+            ) {
+                buffered.close()
+                return DocumentFormatValidation.Valid(DocumentType.RTF)
             }
 
             buffered.close()
 
             // If none of the magic numbers matched, check fallback
             return if (fallbackType != DocumentType.UNKNOWN) {
-                if (fallbackType.isLegacy) {
-                    DocumentFormatValidation.LegacyFormat(
-                        fallbackType,
-                        "This legacy format cannot currently be fully rendered by NotOffice563."
-                    )
-                } else {
-                    DocumentFormatValidation.Valid(fallbackType)
-                }
+                DocumentFormatValidation.Valid(fallbackType)
             } else {
                 DocumentFormatValidation.Unsupported(null, null)
             }

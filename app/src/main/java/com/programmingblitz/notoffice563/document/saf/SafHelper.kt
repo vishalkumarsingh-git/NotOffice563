@@ -129,6 +129,10 @@ object SafHelper {
                 DocumentType.EXCEL_XLS -> "application/vnd.ms-excel"
                 DocumentType.PPT_PPTX -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
                 DocumentType.PPT_PPT -> "application/vnd.ms-powerpoint"
+                DocumentType.RTF -> "application/rtf"
+                DocumentType.CSV -> "text/csv"
+                DocumentType.TSV -> "text/tab-separated-values"
+                DocumentType.TXT -> "text/plain"
                 DocumentType.UNKNOWN -> "application/octet-stream"
             }
         }

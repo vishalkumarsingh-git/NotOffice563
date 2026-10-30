@@ -40,8 +40,8 @@ fun OfficeDocumentIcon(
     size: Dp = 44.dp
 ) {
     val brandColor = when (documentType) {
-        DocumentType.WORD_DOCX, DocumentType.WORD_DOC -> WordDocBlue
-        DocumentType.EXCEL_XLSX, DocumentType.EXCEL_XLS -> ExcelSheetGreen
+        DocumentType.WORD_DOCX, DocumentType.WORD_DOC, DocumentType.RTF, DocumentType.TXT -> WordDocBlue
+        DocumentType.EXCEL_XLSX, DocumentType.EXCEL_XLS, DocumentType.CSV, DocumentType.TSV -> ExcelSheetGreen
         DocumentType.PPT_PPTX, DocumentType.PPT_PPT -> PptPresentationAmber
         DocumentType.PDF -> PdfRubyRed
         else -> WordDocBlue
@@ -49,7 +49,11 @@ fun OfficeDocumentIcon(
 
     val badgeLetter = when (documentType) {
         DocumentType.WORD_DOCX, DocumentType.WORD_DOC -> "W"
+        DocumentType.RTF -> "RTF"
+        DocumentType.TXT -> "TXT"
         DocumentType.EXCEL_XLSX, DocumentType.EXCEL_XLS -> "X"
+        DocumentType.CSV -> "CSV"
+        DocumentType.TSV -> "TSV"
         DocumentType.PPT_PPTX, DocumentType.PPT_PPT -> "P"
         DocumentType.PDF -> "PDF"
         else -> "DOC"

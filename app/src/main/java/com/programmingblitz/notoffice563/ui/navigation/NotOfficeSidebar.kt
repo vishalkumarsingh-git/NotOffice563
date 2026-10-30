@@ -408,10 +408,17 @@ fun NotOfficeSidebar(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "NotOffice563 • iOS 26 Liquid Glass",
+                        text = "NotOffice563 • Created by V. K. Singh",
                         fontSize = 10.sp,
                         color = if (isDark) LiquidGlassTokens.DarkTextTertiary else LiquidGlassTokens.LightTextTertiary,
                         modifier = Modifier.padding(start = 6.dp)
+                    )
+                    Text(
+                        text = "© 2026 Programming Blitz.",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isDark) LiquidGlassTokens.DarkTextTertiary else LiquidGlassTokens.LightTextTertiary,
+                        modifier = Modifier.padding(start = 6.dp, top = 2.dp)
                     )
                 }
             }

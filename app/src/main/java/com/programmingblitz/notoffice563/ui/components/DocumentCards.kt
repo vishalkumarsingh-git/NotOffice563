@@ -132,6 +132,30 @@ fun getDocumentAppearance(typeString: String): DocumentTypeAppearance {
             containerColor = if (isDark) PdfRubyContainerDark else PdfRubyContainer,
             badgeLabel = "PDF"
         )
+        DocumentType.RTF -> DocumentTypeAppearance(
+            icon = Icons.Filled.Description,
+            iconColor = if (isDark) WordDocBlueLight else WordDocBlue,
+            containerColor = if (isDark) WordDocContainerDark else WordDocContainer,
+            badgeLabel = "RTF"
+        )
+        DocumentType.CSV -> DocumentTypeAppearance(
+            icon = Icons.Filled.TableChart,
+            iconColor = if (isDark) ExcelSheetGreenLight else ExcelSheetGreen,
+            containerColor = if (isDark) ExcelSheetContainerDark else ExcelSheetContainer,
+            badgeLabel = "CSV"
+        )
+        DocumentType.TSV -> DocumentTypeAppearance(
+            icon = Icons.Filled.TableChart,
+            iconColor = if (isDark) ExcelSheetGreenLight else ExcelSheetGreen,
+            containerColor = if (isDark) ExcelSheetContainerDark else ExcelSheetContainer,
+            badgeLabel = "TSV"
+        )
+        DocumentType.TXT -> DocumentTypeAppearance(
+            icon = Icons.Filled.Description,
+            iconColor = if (isDark) WordDocBlueLight else WordDocBlue,
+            containerColor = if (isDark) WordDocContainerDark else WordDocContainer,
+            badgeLabel = "TXT"
+        )
         DocumentType.UNKNOWN -> DocumentTypeAppearance(
             icon = Icons.Filled.Description,
             iconColor = MaterialTheme.colorScheme.primary,

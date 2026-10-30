@@ -46,7 +46,7 @@ class ExampleRobolectricTest {
   @Test
   fun `verify auth state is honest and unauthenticated initially`() {
     val context = ApplicationProvider.getApplicationContext<Context>()
-    val preferences = com.programmingblitz.notoffice563.data.local.AppPreferences(context)
+    val preferences = com.programmingblitz.notoffice563.data.local.AppPreferences.getInstance(context)
     val authManager = com.programmingblitz.notoffice563.data.auth.AuthManager(context, preferences)
 
     kotlinx.coroutines.runBlocking {

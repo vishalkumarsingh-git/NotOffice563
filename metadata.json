@@ -1,6 +1,6 @@
 {
   "name": "NotOffice563",
-  "description": "An independent local document workspace for opening, viewing, organizing, and managing Word, Excel, PowerPoint, and PDF files.",
+  "description": "A modern office suite for documents, spreadsheets, presentations, and PDFs — built to make productivity simple. Created by V. K. Singh © 2026 Programming Blitz.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
