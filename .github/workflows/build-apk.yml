@@ -45,14 +45,14 @@ jobs:
       - name: Create temporary debug signing key
         run: keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
 
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+
       - name: Prepare APK for release
         run: |
           APK_PATH="$(find app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
           test -n "$APK_PATH"
           cp "$APK_PATH" NotOffice563.apk
-
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
