@@ -1,4 +1,4 @@
-name: Build NotOffice563 APK
+name: Build NotOffice563 APK by Agent
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
       - '.github/workflows/build-apk.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -44,21 +44,31 @@ jobs:
 
       - name: Create temporary debug signing key
         run: |
-          keytool -genkeypair -v \
-            -keystore debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US" \
+          keytool -genkeypair -v \\
+            -keystore debug.keystore \\
+            -storepass android \\
+            -alias androiddebugkey \\
+            -keypass android \\
+            -dname "CN=Android Debug,O=Android,C=US" \\
             -keyalg RSA -keysize 2048 -validity 10000
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: NotOffice563-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish latest APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: NotOffice563 Latest APK by Agent
+          files: app/build/outputs/apk/debug/*.apk
+          overwrite_files: true
+          make_latest: true
+          fail_on_unmatched_files: true
