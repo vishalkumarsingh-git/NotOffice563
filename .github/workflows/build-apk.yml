@@ -43,14 +43,13 @@ jobs:
           gradle-version: '9.3.1'
 
       - name: Create temporary debug signing key
+        run: keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
+
+      - name: Prepare APK for release
         run: |
-          keytool -genkeypair -v \\
-            -keystore debug.keystore \\
-            -storepass android \\
-            -alias androiddebugkey \\
-            -keypass android \\
-            -dname "CN=Android Debug,O=Android,C=US" \\
-            -keyalg RSA -keysize 2048 -validity 10000
+          APK_PATH="$(find app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$APK_PATH"
+          cp "$APK_PATH" NotOffice563.apk
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
@@ -59,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NotOffice563-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: NotOffice563.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -68,7 +67,7 @@ jobs:
         with:
           tag_name: latest
           name: NotOffice563 Latest APK by Agent
-          files: app/build/outputs/apk/debug/*.apk
+          files: NotOffice563.apk
           overwrite_files: true
           make_latest: true
           fail_on_unmatched_files: true
