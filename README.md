@@ -98,7 +98,15 @@ Room Metadata Persistence (RecentFileEntity, DocumentNoteEntity)
 
 ---
 
-## 5. Running the Project
+## 5. Download APK
+
+Download the latest successful debug APK from the [NotOffice563 latest GitHub Release](https://github.com/vishalkumarsingh-git/NotOffice563/releases/download/latest/NotOffice563.apk). The link is updated whenever the APK build workflow succeeds.
+
+You can also browse [all workflow runs and build artifacts](https://github.com/vishalkumarsingh-git/NotOffice563/actions).
+
+---
+
+## 6. Running the Project
 
 1. Open Android Studio (Hedgehog, Iguana, or later).
 2. Choose **File > Open** and select the project directory.
@@ -108,7 +116,7 @@ Room Metadata Persistence (RecentFileEntity, DocumentNoteEntity)
 
 ---
 
-## 6. Limitations
+## 7. Limitations
 
 - **Office Rendering**: NotOffice563 emphasizes clean readability, privacy, and fast local performance rather than reproducing full desktop Microsoft Office rendering (e.g. macro execution, complex charts, or animations).
 - **Legacy Office Formats**: Binary compound document formats (`.doc`, `.xls`, `.ppt`) use graceful fallbacks to external viewing applications.
@@ -117,7 +125,7 @@ Room Metadata Persistence (RecentFileEntity, DocumentNoteEntity)
 
 ---
 
-## 7. Roadmap
+## 8. Roadmap
 
 - [ ] Google Drive, OneDrive, and Nextcloud SAF document provider integrations
 - [ ] Export Word/Excel documents directly to PDF
@@ -127,6 +135,6 @@ Room Metadata Persistence (RecentFileEntity, DocumentNoteEntity)
 
 ---
 
-## 8. Disclaimer
+## 9. Disclaimer
 
 **NotOffice563** is an independent application and is **not affiliated with, sponsored by, or endorsed by Microsoft Corporation**. Microsoft, Word, Excel, PowerPoint, and Microsoft 365 are registered trademarks of Microsoft Corporation.
