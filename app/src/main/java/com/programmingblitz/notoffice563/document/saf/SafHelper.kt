@@ -8,8 +8,11 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import com.programmingblitz.notoffice563.domain.model.DocumentType
-import com.programmingblitz.notoffice563.util.FileUtils
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 
 data class DocumentMetadata(
     val uri: Uri,
@@ -19,31 +22,46 @@ data class DocumentMetadata(
     val documentType: DocumentType,
     val fileSize: Long,
     val lastModified: Long,
-    val hasPermission: Boolean
+    val hasPermission: Boolean,
+    val isWritable: Boolean = false
 )
 
+/**
+ * Central document access and Storage Access Framework (SAF) manager for NotOffice563.
+ * Handles content:// and file:// streams, persistable URI permissions, metadata queries,
+ * and reliable read/write operations without assuming local filesystem paths.
+ */
 object SafHelper {
 
     /**
-     * Persists URI read/write permissions granted by the system Document Picker.
-     * This allows NotOffice563 to reopen the document on subsequent app launches
-     * without repeatedly prompting the user.
+     * Persists URI read/write permissions granted by Android's document picker or caller apps.
+     * Respects granted flags and avoids throwing SecurityException when persistable permission
+     * is not granted by the caller.
      */
-    fun takePersistableUriPermission(contentResolver: ContentResolver, uri: Uri) {
+    fun takePersistableUriPermission(contentResolver: ContentResolver, uri: Uri, intentFlags: Int? = null) {
         if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
             try {
-                val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                contentResolver.takePersistableUriPermission(uri, takeFlags)
-            } catch (e: SecurityException) {
-                // Some providers only grant read permission
+                if (intentFlags != null) {
+                    val isPersistable = (intentFlags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION) != 0
+                    if (isPersistable) {
+                        val takeFlags = intentFlags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        if (takeFlags != 0) {
+                            contentResolver.takePersistableUriPermission(uri, takeFlags)
+                            return
+                        }
+                    }
+                }
+
+                // If intentFlags was not passed or provider supports taking persistable permission:
+                val fullFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 try {
-                    contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
-                } catch (_: Exception) {
-                    // Ignored if provider does not support persistable permissions
+                    contentResolver.takePersistableUriPermission(uri, fullFlags)
+                } catch (_: SecurityException) {
+                    try {
+                        contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    } catch (_: Exception) {
+                        // Caller granted temporary read-only access (e.g. standard file manager ACTION_VIEW)
+                    }
                 }
             } catch (_: Exception) {
                 // Graceful fallback for non-persistable providers
@@ -52,11 +70,93 @@ object SafHelper {
     }
 
     /**
-     * Checks if the app currently holds persisted URI permission or can read from this URI.
+     * Opens a reliable InputStream from any ContentResolver URI or file URI.
+     */
+    fun openInputStream(context: Context, uri: Uri): InputStream? {
+        return try {
+            if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) {
+                    val file = File(path)
+                    if (file.exists() && file.canRead()) {
+                        return FileInputStream(file)
+                    }
+                }
+            }
+            context.contentResolver.openInputStream(uri)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Opens a reliable OutputStream for saving modifications back to the original URI.
+     * Tries "rwt" (read-write-truncate) first, then falls back to "wt" (write-truncate).
+     */
+    fun openOutputStream(context: Context, uri: Uri, mode: String = "rwt"): OutputStream? {
+        return try {
+            if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) {
+                    val file = File(path)
+                    return FileOutputStream(file)
+                }
+            }
+            val contentResolver = context.contentResolver
+            contentResolver.openOutputStream(uri, mode)
+                ?: contentResolver.openOutputStream(uri, "wt")
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Checks if the app currently holds permission to read this URI.
      */
     fun canAccessUri(context: Context, uri: Uri): Boolean {
         return try {
+            if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) {
+                    val file = File(path)
+                    if (file.exists() && file.canRead()) return true
+                }
+            }
             context.contentResolver.openInputStream(uri)?.use { true } ?: false
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Checks if the app currently holds write permission to this URI.
+     */
+    fun isUriWritable(context: Context, uri: Uri): Boolean {
+        return try {
+            if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) {
+                    val file = File(path)
+                    if (file.exists() && file.canWrite()) return true
+                }
+            }
+            // Check DocumentContract flags if available
+            val projection = arrayOf(DocumentsContract.Document.COLUMN_FLAGS)
+            var hasWriteFlag = false
+            try {
+                context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val flagIdx = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_FLAGS)
+                        if (flagIdx != -1) {
+                            val flags = cursor.getInt(flagIdx)
+                            hasWriteFlag = (flags and DocumentsContract.Document.FLAG_SUPPORTS_WRITE) != 0
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+
+            hasWriteFlag || canAccessUri(context, uri)
         } catch (_: Exception) {
             false
         }
@@ -71,7 +171,7 @@ object SafHelper {
         var lastModified = 0L
         val contentResolver = context.contentResolver
 
-        var mimeType: String? = contentResolver.getType(uri)
+        var mimeType: String? = runCatching { contentResolver.getType(uri) }.getOrNull()
 
         if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
             val projection = arrayOf(
@@ -120,7 +220,7 @@ object SafHelper {
         val ext = resolvedName.substringAfterLast('.', "").lowercase()
         val docType = DocumentType.fromMimeOrFilename(mimeType, resolvedName)
 
-        if (mimeType == null || mimeType == "application/octet-stream") {
+        if (mimeType == null || mimeType == "application/octet-stream" || mimeType == "*/*") {
             mimeType = when (docType) {
                 DocumentType.PDF -> "application/pdf"
                 DocumentType.WORD_DOCX -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -138,6 +238,7 @@ object SafHelper {
         }
 
         val accessible = canAccessUri(context, uri)
+        val writable = isUriWritable(context, uri)
 
         return DocumentMetadata(
             uri = uri,
@@ -147,8 +248,36 @@ object SafHelper {
             documentType = docType,
             fileSize = fileSize,
             lastModified = if (lastModified > 0) lastModified else System.currentTimeMillis(),
-            hasPermission = accessible
+            hasPermission = accessible,
+            isWritable = writable
         )
+    }
+
+    /**
+     * Copies a temporary document stream to app-private cache/documents storage so it can be
+     * safely re-opened later if the caller application's temporary grant expires.
+     */
+    fun copyDocumentToAppStorage(context: Context, sourceUri: Uri, preferredName: String): Uri? {
+        return try {
+            val docsDir = File(context.filesDir, "imported_docs").apply { mkdirs() }
+            val sanitizedName = preferredName.replace("[^a-zA-Z0-9._ -]".toRegex(), "_")
+            val targetFile = File(docsDir, sanitizedName)
+
+            val inputStream = openInputStream(context, sourceUri) ?: return null
+            inputStream.use { input ->
+                FileOutputStream(targetFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                targetFile
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /**

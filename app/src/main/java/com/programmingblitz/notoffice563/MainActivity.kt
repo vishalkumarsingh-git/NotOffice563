@@ -131,11 +131,13 @@ import java.nio.charset.StandardCharsets
 
 class MainActivity : ComponentActivity() {
 
+    private val incomingIntentUri = kotlinx.coroutines.flow.MutableStateFlow<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val incomingUri = handleIncomingIntent(intent)
+        handleIncomingIntent(intent)
 
         setContent {
             val context = LocalContext.current
@@ -193,19 +195,33 @@ class MainActivity : ComponentActivity() {
                 MainAppContent(
                     repository = repository,
                     preferences = preferences,
-                    incomingUri = incomingUri
+                    incomingIntentUri = incomingIntentUri
                 )
             }
         }
     }
 
-    private fun handleIncomingIntent(intent: Intent?): String? {
-        if (intent == null) return null
-        if (intent.action == Intent.ACTION_VIEW || intent.action == Intent.ACTION_EDIT) {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent == null) return
+        val action = intent.action
+        if (action == Intent.ACTION_VIEW || action == Intent.ACTION_EDIT) {
             val data: Uri? = intent.data
-            return data?.toString()
+            if (data != null) {
+                // Safely persist permissions if caller granted persistable permissions
+                com.programmingblitz.notoffice563.document.saf.SafHelper.takePersistableUriPermission(
+                    contentResolver,
+                    data,
+                    intent.flags
+                )
+                incomingIntentUri.value = data
+            }
         }
-        return null
     }
 }
 
@@ -213,7 +229,7 @@ class MainActivity : ComponentActivity() {
 fun MainAppContent(
     repository: DocumentRepository,
     preferences: AppPreferences,
-    incomingUri: String?
+    incomingIntentUri: kotlinx.coroutines.flow.StateFlow<Uri?>
 ) {
     val context = LocalContext.current
     val authManager = remember { AuthManager(context, preferences) }
@@ -226,15 +242,20 @@ fun MainAppContent(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val incomingUri by incomingIntentUri.collectAsStateWithLifecycle()
+
     // Handle back button to close drawer when open
     BackHandler(enabled = drawerState.isOpen) {
         scope.launch { drawerState.close() }
     }
 
-    // Direct opening if launched with an external document VIEW intent
+    // Direct opening if launched with an external document VIEW/EDIT intent
     LaunchedEffect(incomingUri) {
-        if (incomingUri != null) {
-            navController.navigate(Screen.Viewer.createRoute(incomingUri))
+        val targetUri = incomingUri
+        if (targetUri != null) {
+            navController.navigate(Screen.Viewer.createRoute(targetUri.toString())) {
+                launchSingleTop = true
+            }
         }
     }
 
@@ -495,7 +516,7 @@ fun MainAppContent(
                     arguments = listOf(navArgument("encodedUri") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val encodedUri = backStackEntry.arguments?.getString("encodedUri") ?: ""
-                    val decodedUri = Uri.decode(encodedUri)
+                    val decodedUri = Screen.Viewer.decodeUriToken(encodedUri)
 
                     val viewerViewModel: ViewerViewModel = viewModel(
                         key = decodedUri,

@@ -30,33 +30,28 @@ class DocumentRepository(
 
     /**
      * Called whenever a document is selected or opened.
-     * Takes persistable URI permissions and records/updates metadata in Room.
+     * Takes persistable URI permissions safely and records/updates metadata in Room.
      */
-    suspend fun registerOpenedDocument(context: Context, uri: Uri): RecentFileEntity = withContext(Dispatchers.IO) {
-        SafHelper.takePersistableUriPermission(context.contentResolver, uri)
+    suspend fun registerOpenedDocument(context: Context, uri: Uri, intentFlags: Int? = null): RecentFileEntity = withContext(Dispatchers.IO) {
+        SafHelper.takePersistableUriPermission(context.contentResolver, uri, intentFlags)
         val metadata = SafHelper.queryMetadata(context, uri)
-
         val rawUriString = uri.toString()
-        val canonicalUriString = Uri.decode(uri.normalizeScheme().toString())
 
         val allExisting = recentFileDao.getAllRecentFilesList()
 
         val existing = allExisting.find {
-            it.uri == canonicalUriString ||
-                    it.uri == rawUriString ||
-                    Uri.decode(it.uri) == canonicalUriString ||
-                    it.displayName.equals(metadata.displayName, ignoreCase = true)
+            it.uri == rawUriString || it.displayName.equals(metadata.displayName, ignoreCase = true)
         }
 
-        // Delete any redundant/stale entries that share the same display name or old URIs
+        // Delete any redundant/stale entries that share old or corrupted URI variations
         for (item in allExisting) {
-            if ((item.displayName.equals(metadata.displayName, ignoreCase = true) || Uri.decode(item.uri) == canonicalUriString) && item.uri != canonicalUriString) {
+            if (item.displayName.equals(metadata.displayName, ignoreCase = true) && item.uri != rawUriString) {
                 recentFileDao.deleteByUri(item.uri)
             }
         }
 
         val entity = RecentFileEntity(
-            uri = canonicalUriString,
+            uri = rawUriString,
             displayName = metadata.displayName,
             mimeType = metadata.mimeType,
             extension = metadata.extension,

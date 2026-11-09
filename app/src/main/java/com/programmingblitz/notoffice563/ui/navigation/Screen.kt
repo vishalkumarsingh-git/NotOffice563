@@ -77,8 +77,28 @@ sealed class Screen(
         title = "Viewer"
     ) {
         fun createRoute(uri: String): String {
-            val encoded = Uri.encode(uri)
-            return "viewer/$encoded"
+            val safeToken = android.util.Base64.encodeToString(
+                uri.toByteArray(Charsets.UTF_8),
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
+            )
+            return "viewer/$safeToken"
+        }
+
+        fun decodeUriToken(token: String): String {
+            return try {
+                val bytes = android.util.Base64.decode(
+                    token,
+                    android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
+                )
+                val decoded = String(bytes, Charsets.UTF_8)
+                if (decoded.startsWith("content://") || decoded.startsWith("file://")) {
+                    decoded
+                } else {
+                    Uri.decode(token)
+                }
+            } catch (_: Exception) {
+                Uri.decode(token)
+            }
         }
     }
 

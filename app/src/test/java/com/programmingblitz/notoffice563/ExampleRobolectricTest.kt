@@ -92,4 +92,57 @@ class ExampleRobolectricTest {
     org.junit.Assert.assertTrue(sidebarRoutes.contains("recent"))
     org.junit.Assert.assertTrue(sidebarRoutes.contains("settings"))
   }
+
+  @Test
+  fun `verify Screen Viewer URI token round-trip preserves encoded characters`() {
+    val originalUriString = "content://com.android.providers.downloads.documents/document/raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2FQuarterly_Report_2026.docx"
+    val route = com.programmingblitz.notoffice563.ui.navigation.Screen.Viewer.createRoute(originalUriString)
+    val token = route.removePrefix("viewer/")
+    val decoded = com.programmingblitz.notoffice563.ui.navigation.Screen.Viewer.decodeUriToken(token)
+
+    assertEquals(originalUriString, decoded)
+  }
+
+  @Test
+  fun `verify ACTION_VIEW intent resolves to MainActivity for docx mime type`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+      setDataAndType(
+        android.net.Uri.parse("content://com.example.provider/document/1"),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      )
+    }
+    val resolveInfo = context.packageManager.queryIntentActivities(intent, 0)
+    val hasMainActivity = resolveInfo.any { it.activityInfo.name == MainActivity::class.java.name }
+    org.junit.Assert.assertTrue("MainActivity should resolve ACTION_VIEW for docx", hasMainActivity)
+  }
+
+  @Test
+  fun `verify ACTION_VIEW intent resolves to MainActivity for xlsx mime type`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+      setDataAndType(
+        android.net.Uri.parse("content://com.example.provider/document/2"),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      )
+    }
+    val resolveInfo = context.packageManager.queryIntentActivities(intent, 0)
+    val hasMainActivity = resolveInfo.any { it.activityInfo.name == MainActivity::class.java.name }
+    org.junit.Assert.assertTrue("MainActivity should resolve ACTION_VIEW for xlsx", hasMainActivity)
+  }
+
+  @Test
+  fun `verify SafHelper queryMetadata on file URI`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val testFile = java.io.File(context.cacheDir, "test_doc.docx").apply {
+      writeText("dummy content")
+    }
+    val uri = android.net.Uri.fromFile(testFile)
+    val meta = com.programmingblitz.notoffice563.document.saf.SafHelper.queryMetadata(context, uri)
+
+    assertEquals("test_doc.docx", meta.displayName)
+    assertEquals(com.programmingblitz.notoffice563.domain.model.DocumentType.WORD_DOCX, meta.documentType)
+    org.junit.Assert.assertTrue(meta.hasPermission)
+    org.junit.Assert.assertTrue(meta.isWritable)
+  }
 }

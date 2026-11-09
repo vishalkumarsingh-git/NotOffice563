@@ -185,7 +185,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.WORD_DOCX -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open document stream")
                     val parsed = DocxParser.parse(inputStream, _fileMetadata.value?.displayName ?: "Document")
                     _contentState.value = ViewerContentState.DocxContent(
@@ -200,7 +200,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.EXCEL_XLSX -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open spreadsheet stream")
                     val parsed = XlsxParser.parse(inputStream)
                     var initialSheet = 0
@@ -216,7 +216,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.PPT_PPTX -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open presentation stream")
                     val parsed = PptxParser.parse(inputStream)
                     var initialSlide = 0
@@ -230,7 +230,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.WORD_DOC, DocumentType.RTF -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open legacy document stream")
                     val parsed = com.programmingblitz.notoffice563.document.parser.DocParser.parse(
                         inputStream,
@@ -248,7 +248,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.TXT -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open text stream")
                     val parsed = com.programmingblitz.notoffice563.document.parser.DocParser.parsePlainText(
                         inputStream.readBytes(),
@@ -266,7 +266,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.EXCEL_XLS -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open legacy spreadsheet stream")
                     val parsed = com.programmingblitz.notoffice563.document.parser.XlsParser.parse(inputStream)
                     var initialSheet = 0
@@ -282,7 +282,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.CSV -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open CSV stream")
                     val parsed = com.programmingblitz.notoffice563.document.parser.XlsParser.parseCsv(inputStream, ",")
                     _contentState.value = ViewerContentState.XlsxContent(
@@ -292,7 +292,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.TSV -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open TSV stream")
                     val parsed = com.programmingblitz.notoffice563.document.parser.XlsParser.parseCsv(inputStream, "\t")
                     _contentState.value = ViewerContentState.XlsxContent(
@@ -302,7 +302,7 @@ class ViewerViewModel(
                 }
 
                 DocumentType.PPT_PPT -> {
-                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val inputStream = SafHelper.openInputStream(context, uri)
                         ?: throw IllegalStateException("Cannot open legacy presentation stream")
                     val parsed = com.programmingblitz.notoffice563.document.parser.PptParser.parse(inputStream)
                     var initialSlide = 0
@@ -395,6 +395,12 @@ class ViewerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val uri = Uri.parse(uriString)
+                if (!SafHelper.isUriWritable(context, uri)) {
+                    _contentState.value = current.copy(saveStatus = SaveStatus.UNSAVED_CHANGES)
+                    _messageEvents.emit("Document is read-only. Please use 'Save a Copy'.")
+                    return@launch
+                }
+
                 val paragraphs = if (current.editedParagraphs.isNotEmpty()) {
                     current.editedParagraphs
                 } else {
@@ -405,16 +411,15 @@ class ViewerViewModel(
 
                 val bytes = DocxParser.createRichDocx(current.editedTitle, paragraphs)
 
-                val outputStream = context.contentResolver.openOutputStream(uri, "rwt")
-                    ?: context.contentResolver.openOutputStream(uri, "wt")
-                    ?: throw IllegalStateException("Cannot open output stream for original file")
+                val outputStream = SafHelper.openOutputStream(context, uri)
+                    ?: throw IllegalStateException("Cannot write to original document. Storage permission may be read-only.")
 
                 outputStream.use { stream ->
                     stream.write(bytes)
                     stream.flush()
                 }
 
-                val reParsed = context.contentResolver.openInputStream(uri)?.use { stream ->
+                val reParsed = SafHelper.openInputStream(context, uri)?.use { stream ->
                     DocxParser.parse(stream, current.editedTitle)
                 } ?: current.parsedDoc
 
@@ -433,7 +438,7 @@ class ViewerViewModel(
                 _messageEvents.emit("Saved changes to original document")
             } catch (e: Exception) {
                 _contentState.value = current.copy(saveStatus = SaveStatus.UNSAVED_CHANGES)
-                _messageEvents.emit("Save failed: ${e.localizedMessage}")
+                _messageEvents.emit("Save failed: ${e.localizedMessage ?: "Write error"}")
             }
         }
     }
@@ -475,6 +480,90 @@ class ViewerViewModel(
             } catch (e: Exception) {
                 _contentState.value = current.copy(saveStatus = SaveStatus.UNSAVED_CHANGES)
                 _messageEvents.emit("Save copy failed: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    /**
+     * Saves document content directly to any destination chosen via SAF ACTION_CREATE_DOCUMENT.
+     */
+    fun saveDocumentToUri(
+        context: Context,
+        destinationUri: Uri,
+        onComplete: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                SafHelper.takePersistableUriPermission(context.contentResolver, destinationUri)
+
+                val bytes: ByteArray = when (val state = _contentState.value) {
+                    is ViewerContentState.DocxContent -> {
+                        val paragraphs = if (state.editedParagraphs.isNotEmpty()) {
+                            state.editedParagraphs
+                        } else {
+                            state.editedContent.split("\n\n", "\n")
+                                .filter { it.isNotBlank() }
+                                .map { com.programmingblitz.notoffice563.domain.model.DocxParagraph(text = it) }
+                        }
+                        DocxParser.createRichDocx(state.editedTitle, paragraphs)
+                    }
+                    is ViewerContentState.XlsxContent -> {
+                        com.programmingblitz.notoffice563.document.generator.XlsxGenerator.buildXlsxFromSpreadsheet(state.parsedSpreadsheet)
+                    }
+                    is ViewerContentState.PptxContent -> {
+                        com.programmingblitz.notoffice563.document.generator.PptxGenerator.buildPptxFromPresentation(state.parsedPresentation)
+                    }
+                    else -> {
+                        val sourceUri = Uri.parse(uriString)
+                        SafHelper.openInputStream(context, sourceUri)?.use { it.readBytes() }
+                            ?: throw IllegalStateException("Cannot read source file to copy")
+                    }
+                }
+
+                val outputStream = SafHelper.openOutputStream(context, destinationUri)
+                    ?: throw IllegalStateException("Cannot write to destination URI")
+
+                outputStream.use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                }
+
+                val newEntity = repository.registerOpenedDocument(context, destinationUri)
+
+                val current = _contentState.value
+                if (current is ViewerContentState.DocxContent) {
+                    _contentState.value = current.copy(
+                        saveStatus = SaveStatus.SAVED,
+                        hasUnsavedChanges = false
+                    )
+                }
+
+                _messageEvents.emit("Saved copy to ${newEntity.displayName}")
+                withContext(Dispatchers.Main) {
+                    onComplete(true)
+                }
+            } catch (e: Exception) {
+                _messageEvents.emit("Save copy failed: ${e.localizedMessage ?: "Unknown error"}")
+                withContext(Dispatchers.Main) {
+                    onComplete(false)
+                }
+            }
+        }
+    }
+
+    fun getSuggestedFileNameAndMime(): Pair<String, String> {
+        val meta = _fileMetadata.value
+        val baseName = meta?.displayName?.substringBeforeLast('.') ?: "Document"
+        val state = _contentState.value
+        return when (state) {
+            is ViewerContentState.DocxContent -> Pair("${baseName}_Copy.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            is ViewerContentState.XlsxContent -> Pair("${baseName}_Copy.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            is ViewerContentState.PptxContent -> Pair("${baseName}_Copy.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation")
+            is ViewerContentState.PdfContent -> Pair("${baseName}_Copy.pdf", "application/pdf")
+            else -> {
+                val ext = meta?.extension ?: "bin"
+                val mime = meta?.mimeType ?: "application/octet-stream"
+                Pair("${baseName}_Copy.$ext", mime)
             }
         }
     }
@@ -544,15 +633,24 @@ class ViewerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val uri = Uri.parse(uriString)
-                val bytes = com.programmingblitz.notoffice563.document.generator.XlsxGenerator.buildXlsxFromSpreadsheet(current.parsedSpreadsheet)
-                val outputStream = context.contentResolver.openOutputStream(uri, "rwt")
-                    ?: context.contentResolver.openOutputStream(uri, "wt")
-                    ?: throw IllegalStateException("Cannot open output stream for XLSX")
+                if (!SafHelper.isUriWritable(context, uri)) {
+                    _messageEvents.emit("Spreadsheet is read-only. Please use 'Save a Copy'.")
+                    return@launch
+                }
 
-                outputStream.use { it.write(bytes) }
+                val bytes = com.programmingblitz.notoffice563.document.generator.XlsxGenerator.buildXlsxFromSpreadsheet(current.parsedSpreadsheet)
+                val outputStream = SafHelper.openOutputStream(context, uri)
+                    ?: throw IllegalStateException("Cannot write to original spreadsheet. Storage permission may be read-only.")
+
+                outputStream.use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                }
+                val entity = repository.registerOpenedDocument(context, uri)
+                _fileMetadata.value = entity
                 _messageEvents.emit("Saved changes to original spreadsheet")
             } catch (e: Exception) {
-                _messageEvents.emit("Save failed: ${e.localizedMessage}")
+                _messageEvents.emit("Save failed: ${e.localizedMessage ?: "Write error"}")
             }
         }
     }
@@ -625,15 +723,24 @@ class ViewerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val uri = Uri.parse(uriString)
-                val bytes = com.programmingblitz.notoffice563.document.generator.PptxGenerator.buildPptxFromPresentation(current.parsedPresentation)
-                val outputStream = context.contentResolver.openOutputStream(uri, "rwt")
-                    ?: context.contentResolver.openOutputStream(uri, "wt")
-                    ?: throw IllegalStateException("Cannot open output stream for PPTX")
+                if (!SafHelper.isUriWritable(context, uri)) {
+                    _messageEvents.emit("Presentation is read-only. Please use 'Save a Copy'.")
+                    return@launch
+                }
 
-                outputStream.use { it.write(bytes) }
+                val bytes = com.programmingblitz.notoffice563.document.generator.PptxGenerator.buildPptxFromPresentation(current.parsedPresentation)
+                val outputStream = SafHelper.openOutputStream(context, uri)
+                    ?: throw IllegalStateException("Cannot write to original presentation. Storage permission may be read-only.")
+
+                outputStream.use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                }
+                val entity = repository.registerOpenedDocument(context, uri)
+                _fileMetadata.value = entity
                 _messageEvents.emit("Saved changes to original presentation")
             } catch (e: Exception) {
-                _messageEvents.emit("Save failed: ${e.localizedMessage}")
+                _messageEvents.emit("Save failed: ${e.localizedMessage ?: "Write error"}")
             }
         }
     }

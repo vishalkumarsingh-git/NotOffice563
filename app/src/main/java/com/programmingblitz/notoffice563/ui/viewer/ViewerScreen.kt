@@ -20,6 +20,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -68,6 +71,18 @@ fun ViewerScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
+    val createCopyLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument(fileMetadata?.mimeType ?: "application/octet-stream")
+    ) { destinationUri: Uri? ->
+        if (destinationUri != null) {
+            viewModel.saveDocumentToUri(context, destinationUri) { success ->
+                if (success) {
+                    onOpenNewDocument(destinationUri.toString())
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadDocument(context)
@@ -142,6 +157,15 @@ fun ViewerScreen(
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
                             DropdownMenuItem(
+                                text = { Text("Save a Copy (Choose folder...)") },
+                                leadingIcon = { Icon(Icons.Filled.Save, contentDescription = null) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    val (suggestedName, _) = viewModel.getSuggestedFileNameAndMime()
+                                    createCopyLauncher.launch(suggestedName)
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("File Details & Notes") },
                                 onClick = {
                                     showOverflowMenu = false
@@ -212,9 +236,8 @@ fun ViewerScreen(
                         },
                         onSaveOriginal = { viewModel.saveOriginalDocx(context) },
                         onSaveCopy = {
-                            viewModel.saveEditedDocxCopy(context) { newUri ->
-                                onOpenNewDocument(newUri.toString())
-                            }
+                            val (suggestedName, _) = viewModel.getSuggestedFileNameAndMime()
+                            createCopyLauncher.launch(suggestedName)
                         },
                         onSaveNote = { key, text -> viewModel.saveNote(key, text) }
                     )
