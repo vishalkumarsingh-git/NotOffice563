@@ -37,14 +37,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.graphics.luminance
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFilterChip
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassFloatingActionButton
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTopBar
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -104,34 +105,27 @@ fun FilesScreen(
         }
     }
 
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = if (isDark) LiquidGlassTokens.DarkBaseBackground else LiquidGlassTokens.LightBaseBackground,
         topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    if (onOpenDrawer != null) {
+            LiquidGlassTopBar(
+                title = "Workspace Files",
+                subtitle = "${uiState.files.size} document${if (uiState.files.size == 1) "" else "s"}",
+                navigationIcon = if (onOpenDrawer != null) {
+                    {
                         LiquidGlassIconButton(
                             onClick = onOpenDrawer,
                             icon = Icons.Filled.Menu,
                             contentDescription = "Open navigation drawer",
                             modifier = Modifier
-                                .padding(start = 12.dp)
+                                .padding(start = 6.dp)
                                 .testTag("open_drawer_button")
                         )
                     }
-                },
-                title = {
-                    Text(
-                        text = "Workspace Files",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
+                } else null,
                 actions = {
                     // View mode toggle
                     LiquidGlassIconButton(
@@ -162,7 +156,7 @@ fun FilesScreen(
                                         Text(
                                             text = sortOption.title,
                                             fontWeight = if (uiState.sortOrder == sortOption) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (uiState.sortOrder == sortOption) AccentBlue else MaterialTheme.colorScheme.onSurface
+                                            color = if (uiState.sortOrder == sortOption) AccentBlue else if (isDark) LiquidGlassTokens.DarkTextPrimary else LiquidGlassTokens.LightTextPrimary
                                         )
                                     },
                                     onClick = {

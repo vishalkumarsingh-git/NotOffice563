@@ -22,11 +22,11 @@ import androidx.compose.material3.Text
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassButton
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassDialog
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassIconButton
+import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTopBar
 import com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,34 +70,27 @@ fun RecentScreen(
         }
     }
 
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = if (isDark) LiquidGlassTokens.DarkBaseBackground else LiquidGlassTokens.LightBaseBackground,
         topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    if (onOpenDrawer != null) {
+            LiquidGlassTopBar(
+                title = "Recent Documents",
+                subtitle = "${uiState.files.size} document${if (uiState.files.size == 1) "" else "s"}",
+                navigationIcon = if (onOpenDrawer != null) {
+                    {
                         LiquidGlassIconButton(
                             onClick = onOpenDrawer,
                             icon = Icons.Filled.Menu,
                             contentDescription = "Open navigation drawer",
                             modifier = Modifier
-                                .padding(start = 12.dp)
+                                .padding(start = 6.dp)
                                 .testTag("open_drawer_button")
                         )
                     }
-                },
-                title = {
-                    Text(
-                        text = "Recent Documents",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
+                } else null,
                 actions = {
                     if (uiState.files.isNotEmpty()) {
                         LiquidGlassIconButton(
@@ -106,7 +99,7 @@ fun RecentScreen(
                             contentDescription = "Clear all recent files",
                             activeColor = LiquidGlassTokens.CrimsonGlass,
                             modifier = Modifier
-                                .padding(end = 12.dp)
+                                .padding(end = 6.dp)
                                 .testTag("clear_all_recent_button")
                         )
                     }

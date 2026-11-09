@@ -183,16 +183,15 @@ fun DocumentListItem(
 ) {
     val appearance = getDocumentAppearance(file.fileType)
     var showMenu by remember { mutableStateOf(false) }
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    Card(
+    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassCard(
         modifier = modifier
             .fillMaxWidth()
-            .testTag("document_item_${file.uri.hashCode()}")
-            .clickable(onClick = onClick),
-        shape = SleekShapes.card,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .testTag("document_item_${file.uri.hashCode()}"),
+        shape = com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.ShapeMedium,
+        isDark = isDark,
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -215,7 +214,7 @@ fun DocumentListItem(
                     text = file.displayName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextPrimary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -223,26 +222,19 @@ fun DocumentListItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Badge chip
-                    Surface(
-                        shape = SleekShapes.chip,
-                        color = appearance.containerColor.copy(alpha = 0.8f)
-                    ) {
-                        Text(
-                            text = appearance.badgeLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = appearance.iconColor,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
+                    // Liquid Glass Badge
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge(
+                        text = appearance.badgeLabel,
+                        color = appearance.iconColor,
+                        containerColor = appearance.containerColor.copy(alpha = 0.5f)
+                    )
 
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
                         text = "${FileUtils.formatFileSize(file.fileSize)} • ${FileUtils.formatRelativeTime(file.lastOpened)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextSecondary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -329,19 +321,14 @@ fun DocumentGridItem(
     modifier: Modifier = Modifier
 ) {
     val appearance = getDocumentAppearance(file.fileType)
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    Card(
+    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassCard(
         modifier = modifier
-            .testTag("document_grid_item_${file.uri.hashCode()}")
-            .liquidPressable(
-                pressedScale = MotionTokens.ScaleCardPressed,
-                hapticType = HapticType.SELECTION,
-                onClick = onClick
-            ),
-        shape = SleekShapes.card,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .testTag("document_grid_item_${file.uri.hashCode()}"),
+        shape = com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.ShapeMedium,
+        isDark = isDark,
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -352,18 +339,11 @@ fun DocumentGridItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = SleekShapes.chip,
-                    color = appearance.containerColor
-                ) {
-                    Text(
-                        text = appearance.badgeLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = appearance.iconColor,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
+                com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge(
+                    text = appearance.badgeLabel,
+                    color = appearance.iconColor,
+                    containerColor = appearance.containerColor.copy(alpha = 0.5f)
+                )
 
                 LiquidGlassIconButton(
                     onClick = onFavoriteToggle,
@@ -390,7 +370,7 @@ fun DocumentGridItem(
                 text = file.displayName,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextPrimary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextPrimary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -400,7 +380,7 @@ fun DocumentGridItem(
             Text(
                 text = FileUtils.formatFileSize(file.fileSize),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextSecondary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextSecondary
             )
         }
     }

@@ -50,19 +50,17 @@ fun StorageCard(
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    Card(
+    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassSurface(
         modifier = modifier
             .fillMaxWidth()
             .testTag("storage_card"),
-        shape = SleekShapes.cardLarge,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 4.dp else 1.dp)
+        shape = com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.ShapeLarge,
+        isDark = isDark,
+        elevation = if (isDark) 4.dp else 2.dp
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(getHeroCardGradient(isDark))
                 .padding(18.dp)
         ) {
             Column {
@@ -96,30 +94,22 @@ fun StorageCard(
                                 text = "Device Storage",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextPrimary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextPrimary
                             )
                             Text(
                                 text = "Local storage capacity",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextSecondary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextSecondary
                             )
                         }
                     }
 
-                    // Percentage badge
-                    Surface(
-                        shape = SleekShapes.chip,
-                        color = AccentBlue.copy(alpha = if (isDark) 0.2f else 0.1f),
-                        border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.25f))
-                    ) {
-                        Text(
-                            text = "${(storageInfo.usedPercentage * 100).toInt()}% Used",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AccentBlue
-                        )
-                    }
+                    // Liquid Glass Percentage badge
+                    com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassBadge(
+                        text = "${(storageInfo.usedPercentage * 100).toInt()}% Used",
+                        color = AccentBlue,
+                        containerColor = AccentBlue.copy(alpha = if (isDark) 0.22f else 0.12f)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -132,7 +122,7 @@ fun StorageCard(
                         .height(8.dp)
                         .clip(SleekShapes.chip),
                     color = AccentBlue,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    trackColor = if (isDark) Color(0x33FFFFFF) else Color(0x1F000000)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -144,13 +134,13 @@ fun StorageCard(
                     Text(
                         text = "${storageInfo.usedGbFormatted} used",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextSecondary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextSecondary
                     )
                     Text(
                         text = "${storageInfo.availableGbFormatted} free",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkTextPrimary else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightTextPrimary
                     )
                 }
             }

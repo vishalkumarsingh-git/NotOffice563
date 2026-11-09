@@ -274,19 +274,38 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Sort Order Chips
-                Row(
+                // Sort Order Chips (2x2 grid for optimal touch targets & readability)
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FileSortOrder.entries.forEach { sort ->
-                        val isSelected = prefs.sortOrder == sort
-                        LiquidGlassFilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.setSortOrder(sort) },
-                            label = sort.title,
-                            modifier = Modifier.weight(1f)
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(FileSortOrder.DATE_MODIFIED, FileSortOrder.NAME).forEach { sort ->
+                            val isSelected = prefs.sortOrder == sort
+                            LiquidGlassFilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.setSortOrder(sort) },
+                                label = sort.title,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(FileSortOrder.SIZE, FileSortOrder.TYPE).forEach { sort ->
+                            val isSelected = prefs.sortOrder == sort
+                            LiquidGlassFilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.setSortOrder(sort) },
+                                label = sort.title,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }

@@ -79,7 +79,7 @@ fun ProfileScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkBaseBackground else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightBaseBackground,
         topBar = {
             com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTopBar(
                 title = "Account Profile",

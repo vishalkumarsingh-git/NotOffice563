@@ -145,4 +145,58 @@ class ExampleRobolectricTest {
     org.junit.Assert.assertTrue(meta.hasPermission)
     org.junit.Assert.assertTrue(meta.isWritable)
   }
+
+  @Test
+  fun `verify changing settings updates AppPreferences without crashing`() = kotlinx.coroutines.runBlocking {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val preferences = com.programmingblitz.notoffice563.data.local.AppPreferences.getInstance(context)
+
+    // Test Theme Mode changes
+    preferences.setThemeMode(com.programmingblitz.notoffice563.data.local.AppThemeMode.DARK)
+    var prefs = preferences.userPreferences.first()
+    assertEquals(com.programmingblitz.notoffice563.data.local.AppThemeMode.DARK, prefs.themeMode)
+
+    preferences.setThemeMode(com.programmingblitz.notoffice563.data.local.AppThemeMode.LIGHT)
+    prefs = preferences.userPreferences.first()
+    assertEquals(com.programmingblitz.notoffice563.data.local.AppThemeMode.LIGHT, prefs.themeMode)
+
+    preferences.setThemeMode(com.programmingblitz.notoffice563.data.local.AppThemeMode.SYSTEM)
+    prefs = preferences.userPreferences.first()
+    assertEquals(com.programmingblitz.notoffice563.data.local.AppThemeMode.SYSTEM, prefs.themeMode)
+
+    // Test View Mode changes
+    preferences.setViewMode(com.programmingblitz.notoffice563.data.local.FileViewMode.GRID)
+    prefs = preferences.userPreferences.first()
+    assertEquals(com.programmingblitz.notoffice563.data.local.FileViewMode.GRID, prefs.viewMode)
+
+    preferences.setViewMode(com.programmingblitz.notoffice563.data.local.FileViewMode.LIST)
+    prefs = preferences.userPreferences.first()
+    assertEquals(com.programmingblitz.notoffice563.data.local.FileViewMode.LIST, prefs.viewMode)
+
+    // Test Sort Order changes
+    for (sort in com.programmingblitz.notoffice563.data.local.FileSortOrder.entries) {
+      preferences.setSortOrder(sort)
+      prefs = preferences.userPreferences.first()
+      assertEquals(sort, prefs.sortOrder)
+    }
+  }
+
+  @Test
+  fun `verify SettingsViewModel updates preferences safely`() = kotlinx.coroutines.runBlocking {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val database = com.programmingblitz.notoffice563.data.local.AppDatabase.getInstance(context)
+    val preferences = com.programmingblitz.notoffice563.data.local.AppPreferences.getInstance(context)
+    val repository = com.programmingblitz.notoffice563.data.repository.DocumentRepository(
+      recentFileDao = database.recentFileDao(),
+      documentNoteDao = database.documentNoteDao()
+    )
+    val viewModel = com.programmingblitz.notoffice563.ui.settings.SettingsViewModel(preferences, repository)
+
+    viewModel.setTheme(com.programmingblitz.notoffice563.data.local.AppThemeMode.DARK)
+    viewModel.setViewMode(com.programmingblitz.notoffice563.data.local.FileViewMode.GRID)
+    viewModel.setSortOrder(com.programmingblitz.notoffice563.data.local.FileSortOrder.NAME)
+    viewModel.clearRecentFiles()
+
+    org.junit.Assert.assertNotNull(viewModel.userPreferences.value)
+  }
 }

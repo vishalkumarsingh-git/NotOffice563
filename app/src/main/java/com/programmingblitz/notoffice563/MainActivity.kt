@@ -82,6 +82,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -265,7 +266,9 @@ fun MainAppContent(
         Screen.Recent.route,
         Screen.Settings.route,
         Screen.Profile.route
-    )
+    ) || (currentRoute != null && currentRoute.startsWith("files"))
+
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -290,9 +293,22 @@ fun MainAppContent(
         }
     ) {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = if (isDark) com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.DarkBaseBackground else com.programmingblitz.notoffice563.ui.theme.glass.LiquidGlassTokens.LightBaseBackground,
             bottomBar = {
-                if (showBottomBar) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showBottomBar,
+                    enter = androidx.compose.animation.slideInVertically(
+                        initialOffsetY = { fullHeight -> fullHeight },
+                        animationSpec = androidx.compose.animation.core.spring(
+                            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+                        )
+                    ) + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(200)),
+                    exit = androidx.compose.animation.slideOutVertically(
+                        targetOffsetY = { fullHeight -> fullHeight },
+                        animationSpec = androidx.compose.animation.core.tween(180)
+                    ) + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(150))
+                ) {
                     com.programmingblitz.notoffice563.ui.navigation.NotOfficeDockBar(
                         currentRoute = currentRoute,
                         onNavigate = { screen ->

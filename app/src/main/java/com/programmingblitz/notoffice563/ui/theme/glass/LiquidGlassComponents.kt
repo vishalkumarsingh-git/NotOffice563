@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -883,7 +884,7 @@ fun LiquidGlassFilterChip(
                     }
                 )
             }
-            .padding(horizontal = 14.dp, vertical = 7.dp),
+            .padding(horizontal = 10.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -906,7 +907,9 @@ fun LiquidGlassFilterChip(
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                     color = textColor,
                     letterSpacing = 0.1.sp
-                )
+                ),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
         }
     }
@@ -1010,12 +1013,13 @@ fun LiquidGlassToggleSwitch(
         }
 
         // Sliding Convex Knob: max travel = trackWidth - 6.dp padding - thumbWidth = 100 - 6 - 52 = 42.dp
-        val maxOffsetDp = trackWidth - 6.dp - thumbWidth
-        val thumbOffsetDp = maxOffsetDp * thumbOffsetFraction
+        val maxOffsetDp = (trackWidth - 6.dp - thumbWidth).coerceAtLeast(0.dp)
+        val safeFraction = thumbOffsetFraction.coerceIn(0f, 1f)
+        val thumbOffsetDp = (maxOffsetDp * safeFraction).coerceIn(0.dp, maxOffsetDp)
 
         Box(
             modifier = Modifier
-                .padding(start = thumbOffsetDp)
+                .offset(x = thumbOffsetDp)
                 .size(width = thumbWidth, height = thumbHeight)
                 .shadow(
                     elevation = 4.dp,
